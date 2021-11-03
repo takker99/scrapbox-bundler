@@ -4,7 +4,7 @@
 import type { Plugin } from "./deps/esbuild-wasm.ts";
 import {
   ImportMap,
-  resolveModuleSpecifier,
+  resolveImportMap,
 } from "https://deno.land/x/importmap@0.2.0/mod.ts";
 
 const loaderList = [
@@ -42,6 +42,7 @@ function isLoader(loader: string): loader is Loader {
 export interface Options {
   importmap?: ImportMap;
   baseURL: URL;
+  progressCallback?: (message: unknown) => void;
 }
 
 const name = "remote-resource";
@@ -49,48 +50,75 @@ export const remoteLoader = (
   options: Options,
 ): Plugin => ({
   name,
-  setup({ onResolve, onLoad }) {
-    const { importmap = { imports: {} }, baseURL } = options ?? {};
+  async setup({ onResolve, onLoad, initialOptions: { external } }) {
+    const {
+      importmap = { imports: {} },
+      baseURL,
+      progressCallback = console.log,
+    } = options ?? {};
+    const importMap = resolveImportMap(importmap, baseURL);
+
+    const cache = await globalThis.caches.open("v1");
+    const keys = await cache.keys();
+    await Promise.all(keys.map((key) => cache.delete(key)));
+
+    const skip = (path: string) => external?.includes?.(path) ?? false;
+
     onResolve(
       { filter: /.*/ },
-      ({ path, namespace, importer, resolveDir }) => {
-        const resolvedPath = resolveModuleSpecifier(
-          path,
-          importmap,
-          baseURL,
-        );
+      ({ path, importer, resolveDir }) => {
+        if (skip(path)) return { external: true };
+        const resolvedPath = importMap.imports?.[path] ?? path;
+        if (skip(path)) return { external: true };
+
         if (resolvedPath.startsWith("http")) {
-          console.log({ path, importer, resolveDir }, "->", resolvedPath);
+          progressCallback({ path, importer, resolveDir }, "->", resolvedPath);
           return {
             path: resolvedPath,
             namespace: name,
           };
         }
-        if (namespace === name) {
-          console.log(
-            { importer, resolveDir },
+        const importURL = new URL(resolvedPath, importer).toString();
+        if (skip(path)) return { external: true };
+        if (importURL.startsWith("http")) {
+          progressCallback(
+            { path: resolvedPath, importer, resolveDir },
             "->",
-            new URL(resolvedPath, importer).toString(),
+            importURL,
           );
           return {
-            path: new URL(resolvedPath, importer).toString(),
+            path: importURL,
             namespace: name,
           };
         }
-        console.log(
-          { resolvedPath, resolveDir },
-          "->",
-          new URL(resolvedPath, resolveDir).toString(),
-        );
-        return { path: new URL(resolvedPath, resolveDir).toString() };
+        return { external: true };
       },
     );
-    onLoad({ filter: /.*/, namespace: name }, async ({ path }) => {
-      const res = await fetch(path);
-      console.log(`Download ${path}`);
-      if (!res.ok) {
-        throw res;
+    onLoad({ filter: /^http/, namespace: name }, async ({ path }) => {
+      const url = new URL(path);
+      if (url.hostname === "scrapbox.io") {
+        url.port = "";
+        url.protocol = "https:";
+        url.hostname = "scrapbox-proxy-server.vercel.app";
       }
+      let res: Response | undefined;
+      const cachedRes = await cache.match(url.toString());
+      if (cachedRes) {
+        progressCallback(`Use cache ${url}`);
+        res = cachedRes;
+      } else {
+        res = await fetch(url.toString());
+        if (!res.ok) {
+          progressCallback({
+            type: "error",
+            data: { status: res.status, statusText: res.statusText },
+          });
+          throw res;
+        }
+        progressCallback(`Download ${url}`);
+        cache.put(url.toString(), res.clone());
+      }
+
       return { contents: await res.text(), loader: getLoader(res) };
     });
   },

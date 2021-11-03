@@ -88,7 +88,9 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
     (async () => {
       const code = await build(props.options);
       console.log("Finish building:", code);
-      const blob = new Blob([code], { type: "application/javascript" });
+      const blob = new Blob([code], {
+        type: "application/javascript;charset=UTF-8",
+      });
       const url = URL.createObjectURL(blob);
       window.open(url, "_self");
       URL.revokeObjectURL(url);

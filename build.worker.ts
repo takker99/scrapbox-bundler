@@ -13,15 +13,19 @@ self.addEventListener<"message">("message", async (event) => {
     wasmURL: "./esbuild.wasm",
     worker: false,
   });
-  await initialized;
-  const { entryURL, ...options } = (event.data) as BundleOptions;
-  const result = await build({
-    stdin: {
-      contents: `import "${entryURL}";`,
-    },
-    write: false,
-    ...options,
-    plugins: [remoteLoader({ baseURL: new URL(entryURL) })],
-  });
-  self.postMessage(result.outputFiles[0].text);
+  try {
+    await initialized;
+    const { entryURL, ...options } = (event.data) as BundleOptions;
+    const result = await build({
+      stdin: {
+        contents: `import "${entryURL}";`,
+      },
+      write: false,
+      ...options,
+      plugins: [remoteLoader({ baseURL: new URL(entryURL) })],
+    });
+    self.postMessage(result.outputFiles[0].text);
+  } catch (e) {
+    self.postMessage({ type: "error", data: e });
+  }
 });
