@@ -1,13 +1,13 @@
 /// <reference no-default-lib="true" />
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-/// <reference lib="webworker.importscripts" />
 import { build, initialize } from "./deps/esbuild-wasm.ts";
 import { remoteLoader } from "./loader.ts";
-import type { BundleOptions } from "./build.ts";
+import type { BuildResult, BundleOptions } from "./types.ts";
+
+const postMessage = (data: BuildResult) => self.postMessage(data);
 
 let initialized: Promise<void> | undefined;
-
 self.addEventListener<"message">("message", async (event) => {
   initialized ??= initialize({
     wasmURL: "./esbuild.wasm",
@@ -22,10 +22,18 @@ self.addEventListener<"message">("message", async (event) => {
       },
       write: false,
       ...options,
-      plugins: [remoteLoader({ baseURL: new URL(entryURL) })],
+      plugins: [
+        remoteLoader({
+          baseURL: new URL(entryURL),
+          progressCallback: postMessage,
+        }),
+      ],
     });
-    self.postMessage(result.outputFiles[0].text);
+    postMessage({
+      type: "built",
+      code: result.outputFiles[0].contents,
+    });
   } catch (e) {
-    self.postMessage({ type: "error", data: e });
+    postMessage({ type: "unexpected", data: e });
   }
 });

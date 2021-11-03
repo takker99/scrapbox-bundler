@@ -2,6 +2,7 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import type { Plugin } from "./deps/esbuild-wasm.ts";
+import type { ImportInfo } from "./types.ts";
 import {
   ImportMap,
   resolveImportMap,
@@ -42,7 +43,7 @@ function isLoader(loader: string): loader is Loader {
 export interface Options {
   importmap?: ImportMap;
   baseURL: URL;
-  progressCallback?: (message: unknown) => void;
+  progressCallback?: (message: ImportInfo) => void;
 }
 
 const name = "remote-resource";
@@ -54,7 +55,7 @@ export const remoteLoader = (
     const {
       importmap = { imports: {} },
       baseURL,
-      progressCallback = console.log,
+      progressCallback,
     } = options ?? {};
     const importMap = resolveImportMap(importmap, baseURL);
 
@@ -72,7 +73,7 @@ export const remoteLoader = (
         if (skip(path)) return { external: true };
 
         if (resolvedPath.startsWith("http")) {
-          progressCallback({ path, importer, resolveDir }, "->", resolvedPath);
+          console.log({ path, importer, resolveDir }, "->", resolvedPath);
           return {
             path: resolvedPath,
             namespace: name,
@@ -81,7 +82,7 @@ export const remoteLoader = (
         const importURL = new URL(resolvedPath, importer).toString();
         if (skip(path)) return { external: true };
         if (importURL.startsWith("http")) {
-          progressCallback(
+          console.log(
             { path: resolvedPath, importer, resolveDir },
             "->",
             importURL,
@@ -104,18 +105,18 @@ export const remoteLoader = (
       let res: Response | undefined;
       const cachedRes = await cache.match(url.toString());
       if (cachedRes) {
-        progressCallback(`Use cache ${url}`);
+        progressCallback?.({ type: "cache", url: url.toString() });
         res = cachedRes;
       } else {
         res = await fetch(url.toString());
         if (!res.ok) {
-          progressCallback({
+          progressCallback?.({
             type: "error",
+            url: url.toString(),
             data: { status: res.status, statusText: res.statusText },
           });
-          throw res;
+          return;
         }
-        progressCallback(`Download ${url}`);
         cache.put(url.toString(), res.clone());
       }
 

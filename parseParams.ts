@@ -1,4 +1,4 @@
-import { BundleOptions, isFormat } from "./build.ts";
+import { BundleOptions, isFormat } from "./types.ts";
 
 export type ParamOptions = BundleOptions & {
   runnow: boolean;

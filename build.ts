@@ -1,33 +1,35 @@
-const formatList = ["esm", "iife", "cjs"] as const;
-export type Format = (typeof formatList)[number];
-export function isFormat(format: string): format is Format {
-  return (formatList as [string, string, string]).includes(format);
-}
-export type BundleOptions = {
-  bundle: boolean;
-  minify: boolean;
-  charset?: "utf8";
-  format: Format;
-  entryURL: string;
-  jsxFactory: string;
-  jsxFragment: string;
-};
+/// <reference no-default-lib="true" />
+/// <reference lib="esnext" />
+/// <reference lib="dom" />
+import { getPromiseSettledAnytimes } from "./utils.ts";
+import type { BuildResult, BundleOptions } from "./types.ts";
 
 const worker = new Worker("./worker.js");
 
-export async function build(params: BundleOptions) {
-  const built = new Promise<string>((resolve, reject) => {
-    worker.postMessage(params);
-    worker.addEventListener(
-      "message",
-      (event) => resolve(event.data as string),
-      {
-        once: true,
-      },
-    );
-    worker.addEventListener("error", (event) => reject(event), {
-      once: true,
-    });
-  });
-  return await built;
+export async function* build(params: BundleOptions) {
+  const [waitMessage, resolve, reject] = getPromiseSettledAnytimes<
+    BuildResult,
+    MessageEvent
+  >();
+  worker.postMessage(params);
+  const callback = (event: MessageEvent) => resolve(event.data as BuildResult);
+  worker.addEventListener(
+    "message",
+    callback,
+  );
+  const onMessageError = (e: MessageEvent) => reject(e);
+  worker.addEventListener("messageerror", onMessageError);
+  try {
+    while (true) {
+      const data = await waitMessage();
+      if (data.type === "error" || data.type === "unexpected") {
+        throw data;
+      }
+      yield data;
+      if (data.type === "built") break;
+      continue;
+    }
+  } finally {
+    worker.removeEventListener("message", callback);
+  }
 }

@@ -3,18 +3,10 @@
 /// <reference lib="dom" />
 /** @jsx h */
 /** @jsxFrag Fragment */
-import {
-  Fragment,
-  h,
-  render,
-  useEffect,
-  useMemo,
-  useState,
-} from "./deps/preact.tsx";
+import { Fragment, h, render, useEffect, useState } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
-import { build, BundleOptions } from "./build.ts";
-
-console.log("Hello, packup!");
+import { build } from "./build.ts";
+import type { BundleOptions } from "./types.ts";
 
 const { runnow, ...initialOptions } = parseSearchParams(location.search);
 
@@ -84,22 +76,38 @@ const App = () => {
 };
 
 const HeadlessApp = (props: { options: BundleOptions }) => {
+  const [log, setLog] = useState<string>();
   useEffect(() => {
     (async () => {
-      const code = await build(props.options);
-      console.log("Finish building:", code);
-      const blob = new Blob([code], {
-        type: "application/javascript;charset=UTF-8",
-      });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_self");
-      URL.revokeObjectURL(url);
+      for await (const data of build(props.options)) {
+        switch (data.type) {
+          case "built": {
+            setLog((old) => `${old}\nFinish building.`);
+            const blob = new Blob([data.code], {
+              type: "application/javascript;charset=UTF-8",
+            });
+            const url = URL.createObjectURL(blob);
+            window.open(url, "_self");
+            URL.revokeObjectURL(url);
+            break;
+          }
+          case "remote":
+            setLog((old) => `${old}\nDownload ${data.url}`);
+            break;
+          case "cache":
+            setLog((old) => `${old}\nUse cache: ${data.url}`);
+            break;
+        }
+      }
     })();
   }, []);
 
   return (
     <>
       <p>Building...please wait.</p>
+      <pre>
+        <code>{log}</code>
+      </pre>
     </>
   );
 };
