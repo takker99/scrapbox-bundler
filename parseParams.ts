@@ -18,6 +18,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const reload = params.get("reload") === null ? false : true;
   const sourcemap = params.get("sourcemap") === null ? false : "inline";
   const external = params.getAll("external");
+  const importMapURL = params.get("importmap") ?? undefined;
 
   return {
     bundle,
@@ -31,5 +32,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     jsxFragment,
     reload,
     sourcemap,
+    importmap: importMapURL,
   };
 }

@@ -2,8 +2,10 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
-import { getLoader, remoteLoader } from "./loader.ts";
+import { remoteLoader } from "./plugin.ts";
+import { getLoader } from "././loader.ts";
 import { fetch } from "./fetch.ts";
+import { fetchImportMap } from "./importmap.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
 
 const postMessage = (data: BuildResult) => self.postMessage(data);
@@ -16,12 +18,14 @@ self.addEventListener<"message">("message", async (event) => {
   });
   try {
     await initialized;
-    const { entryURL, reload, ...options } = (event.data) as BundleOptions;
+    const { entryURL, reload, importmap, ...options } =
+      (event.data) as BundleOptions;
     const { response } = await fetch(entryURL);
     const loader = getLoader(response);
-    const url = decodeURI(entryURL);
-    // const { pathname } = new URL(url);
-    // const sourcefile = pathname.split("/").pop();
+
+    const importMap = importmap
+      ? (await fetchImportMap(importmap, reload)).json
+      : undefined;
 
     const result = await build({
       stdin: {
@@ -34,6 +38,7 @@ self.addEventListener<"message">("message", async (event) => {
         remoteLoader({
           baseURL: new URL(entryURL),
           reload,
+          importmap: importMap,
           progressCallback: postMessage,
         }),
       ],
@@ -48,6 +53,17 @@ self.addEventListener<"message">("message", async (event) => {
         type: "fetch error",
         url: e.url,
         data: { status: e.status, statusText: e.statusText },
+      });
+      return;
+    }
+    if (e instanceof SyntaxError) {
+      console.error(e);
+      postMessage({
+        type: "unexpected error",
+        data: {
+          stack: e.stack,
+          message: e.message,
+        },
       });
       return;
     }
