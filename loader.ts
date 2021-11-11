@@ -117,6 +117,7 @@ export const remoteLoader = (
           });
           return;
         }
+        progressCallback?.({ type: "remote", url: url.toString() });
         cache.put(url.toString(), res.clone());
       }
 
