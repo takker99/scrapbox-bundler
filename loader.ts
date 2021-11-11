@@ -72,7 +72,6 @@ export const remoteLoader = (
         const resolvedPath = importMap.imports?.[path] ?? path;
 
         if (resolvedPath.startsWith("http")) {
-          console.log(`(${path}) -> ${resolvedPath}`);
           if (skip(resolvedPath)) {
             console.log(`skip ${resolvedPath}`);
             return {
@@ -88,7 +87,6 @@ export const remoteLoader = (
         importer = importer === "<stdin>" ? baseURL.toString() : importer;
         const importURL = new URL(resolvedPath, importer).toString();
         if (importURL.startsWith("http")) {
-          console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
           if (skip(importURL)) {
             console.log(`skip ${importURL}`);
             return {
