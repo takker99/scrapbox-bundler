@@ -105,7 +105,10 @@ export const remoteLoader = (
       let res: Response | undefined;
       const cachedRes = await cache.match(url.toString());
       if (cachedRes) {
-        progressCallback?.({ type: "cache", url: url.toString() });
+        progressCallback?.({
+          type: "cache",
+          url: decodeURIComponent(url.toString()),
+        });
         res = cachedRes;
       } else {
         res = await fetch(url.toString());
@@ -117,7 +120,10 @@ export const remoteLoader = (
           });
           return;
         }
-        progressCallback?.({ type: "remote", url: url.toString() });
+        progressCallback?.({
+          type: "remote",
+          url: decodeURIComponent(url.toString()),
+        });
         cache.put(url.toString(), res.clone());
       }
 
