@@ -396,7 +396,7 @@ function getPromiseSettledAnytimes() {
         reject
     ];
 }
-const worker = new Worker("./worker.js");
+const worker = new Worker("./assets/worker.js");
 async function* build(params) {
     const [waitMessage, resolve, reject] = getPromiseSettledAnytimes();
     worker.postMessage(params);
