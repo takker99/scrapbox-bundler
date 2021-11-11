@@ -44,7 +44,7 @@ export const remoteLoader = (
             console.log(`skip ${resolvedPath}`);
             return {
               external: true,
-              path: relative(baseURL.toString(), resolvedPath),
+              path: relative(baseURL, new URL(resolvedPath)),
             };
           }
           return {
@@ -60,7 +60,7 @@ export const remoteLoader = (
             console.log(`skip ${resolvedPath2}`);
             return {
               external: true,
-              path: relative(baseURL.toString(), resolvedPath2),
+              path: relative(baseURL, new URL(resolvedPath2)),
             };
           }
           return {
