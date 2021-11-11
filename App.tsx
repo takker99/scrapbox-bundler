@@ -76,7 +76,7 @@ const App = () => {
 };
 
 const HeadlessApp = (props: { options: BundleOptions }) => {
-  const [log, setLog] = useState<string>();
+  const [log, setLog] = useState<string>("");
   useEffect(() => {
     (async () => {
       for await (const data of build(props.options)) {
