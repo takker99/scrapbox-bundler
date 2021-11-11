@@ -35,6 +35,7 @@ self.addEventListener<"message">("message", async (event) => {
       code: result.outputFiles[0].contents,
     });
   } catch (e) {
-    postMessage({ type: "unexpected", data: e });
+    console.error(e);
+    postMessage({ type: "unexpected", data: { ...e } });
   }
 });
