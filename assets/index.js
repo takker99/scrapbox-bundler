@@ -366,6 +366,7 @@ function parseSearchParams(searchParam) {
     const reload = params.get("reload") === null ? false : true;
     const sourcemap = params.get("sourcemap") === null ? false : "inline";
     const external = params.getAll("external");
+    const importMapURL = params.get("importmap") ?? undefined;
     return {
         bundle,
         minify,
@@ -377,7 +378,8 @@ function parseSearchParams(searchParam) {
         jsxFactory,
         jsxFragment,
         reload,
-        sourcemap
+        sourcemap,
+        importmap: importMapURL
     };
 }
 function getPromiseSettledAnytimes() {

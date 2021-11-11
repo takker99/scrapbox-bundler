@@ -2543,57 +2543,25 @@ async function fetchNetworkFirst(url) {
     }
 }
 function relative(from, to) {
-    if (from === to) return "";
-    let fromStart = 1;
-    const fromEnd = from.length;
-    for(; fromStart < fromEnd; ++fromStart){
-        if (from.charCodeAt(fromStart) !== 47) break;
-    }
-    const fromLen = fromEnd - fromStart;
-    let toStart = 1;
-    const toEnd = to.length;
-    for(; toStart < toEnd; ++toStart){
-        if (to.charCodeAt(toStart) !== 47) break;
-    }
-    const toLen = toEnd - toStart;
-    const length = fromLen < toLen ? fromLen : toLen;
-    let lastCommonSep = -1;
-    let i = 0;
-    for(; i <= length; ++i){
-        if (i === length) {
-            if (toLen > length) {
-                if (to.charCodeAt(toStart + i) === 47) {
-                    return to.slice(toStart + i + 1);
-                } else if (i === 0) {
-                    return to.slice(toStart + i);
-                }
-            } else if (fromLen > length) {
-                if (from.charCodeAt(fromStart + i) === 47) {
-                    lastCommonSep = i;
-                } else if (i === 0) {
-                    lastCommonSep = 0;
-                }
-            }
+    if (from === to) return "./";
+    if (from.protocol !== to.protocol) return to.toString();
+    if (from.hostname !== to.hostname) return `//${to.hostname}${to.pathname}`;
+    const fromSegments = from.pathname.split("/");
+    const toSegments = to.pathname.split("/");
+    let commonLength = 1;
+    const minLength = Math.min(fromSegments.length, toSegments.length);
+    for(; commonLength < minLength;){
+        if (fromSegments[commonLength] !== toSegments[commonLength]) {
             break;
         }
-        const fromCode = from.charCodeAt(fromStart + i);
-        const toCode = to.charCodeAt(toStart + i);
-        if (fromCode !== toCode) break;
-        else if (fromCode === 47) lastCommonSep = i;
+        commonLength++;
     }
-    let out = "";
-    for(i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i){
-        if (i === fromEnd || from.charCodeAt(i) === 47) {
-            if (out.length === 0) out += "..";
-            else out += "/..";
-        }
+    if (commonLength === 1) {
+        return to.pathname;
     }
-    if (out.length > 0) return out + to.slice(toStart + lastCommonSep);
-    else {
-        toStart += lastCommonSep;
-        if (to.charCodeAt(toStart) === 47) ++toStart;
-        return to.slice(toStart);
-    }
+    const deleteSegLength = fromSegments.length - commonLength;
+    const prefix = deleteSegLength == 0 ? `./${fromSegments[fromSegments.length - 1]}/` : deleteSegLength === 1 ? "./" : "../".repeat(deleteSegLength - 1);
+    return `${prefix}${toSegments.slice(commonLength).join("/")}`;
 }
 const loaderList = [
     "js",
@@ -2612,17 +2580,48 @@ const loaderList = [
 function isLoader(loader) {
     return loaderList.includes(loader);
 }
+function getLoader(response) {
+    const url = response.url;
+    const ext = url.split(".").pop();
+    if (ext && isLoader(ext)) return ext;
+    if (ext === "mjs") return "js";
+    const contentType = response.headers.get("Content-Type") ?? "text/plain";
+    const mimeType = contentType.split(";")[0]?.trim?.() ?? "text/plain";
+    return mimeTypeToLoader(mimeType);
+}
+function mimeTypeToLoader(mimeType) {
+    const subType = mimeType.split("/")[1] ?? "plain";
+    if (/(?:^plain$|^xml|^svg|^x?html)/.test(subType)) {
+        return "text";
+    }
+    if (subType.startsWith("json")) {
+        return "json";
+    }
+    switch(subType){
+        case "javascript":
+            return "js";
+        case "typescript":
+            return "ts";
+        case "css":
+            return "css";
+        default:
+            return "text";
+    }
+}
 const name = "remote-resource";
 const remoteLoader = (options)=>({
         name,
-        setup ({ onResolve , onLoad , initialOptions: { external  }  }) {
+        setup ({ onResolve , onLoad , initialOptions: { external =[]  }  }) {
             const { importmap ={
                 imports: {
                 }
             } , baseURL , reload , progressCallback ,  } = options ?? {
             };
             const importMap = resolveImportMap(importmap, baseURL);
-            const skip = (path)=>external?.includes?.(path) ?? false
+            external = external.map((path)=>new URL(path, baseURL).href
+            );
+            console.log(external);
+            const skip = (path)=>external.includes(path)
             ;
             onResolve({
                 filter: /.*/
@@ -2632,12 +2631,11 @@ const remoteLoader = (options)=>({
                 };
                 const resolvedPath = importMap.imports?.[path] ?? path;
                 if (resolvedPath.startsWith("http")) {
-                    console.log(`(${path}) -> ${resolvedPath}`);
                     if (skip(resolvedPath)) {
                         console.log(`skip ${resolvedPath}`);
                         return {
                             external: true,
-                            path: relative(baseURL.toString(), resolvedPath)
+                            path: relative(baseURL, new URL(resolvedPath))
                         };
                     }
                     return {
@@ -2647,17 +2645,17 @@ const remoteLoader = (options)=>({
                 }
                 importer = importer === "<stdin>" ? baseURL.toString() : importer;
                 const importURL = new URL(resolvedPath, importer).toString();
-                if (importURL.startsWith("http")) {
-                    console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
-                    if (skip(importURL)) {
-                        console.log(`skip ${importURL}`);
+                const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
+                if (resolvedPath2.startsWith("http")) {
+                    if (skip(resolvedPath2)) {
+                        console.log(`skip ${resolvedPath2}`);
                         return {
                             external: true,
-                            path: relative(baseURL.toString(), importURL)
+                            path: relative(baseURL, new URL(resolvedPath2))
                         };
                     }
                     return {
-                        path: decodeURI(importURL),
+                        path: decodeURI(resolvedPath2),
                         namespace: name
                     };
                 }
@@ -2697,13 +2695,40 @@ const remoteLoader = (options)=>({
         }
     })
 ;
-function getLoader(response) {
-    const url = response.url;
-    const ext = url.split(".").pop();
-    if (ext && isLoader(ext)) return ext;
-    if (ext === "mjs") return "js";
-    const contentType = response.headers.get("Content-Type") ?? "text/plain";
-    return isLoader(contentType) ? contentType : "text";
+async function fetchImportMap(url, reload = false) {
+    const { type , response  } = await fetch1(url, reload);
+    const json = await response.json();
+    ensureImportMap(json);
+    return {
+        type,
+        json
+    };
+}
+function ensureImportMap(json) {
+    if (!("imports" in json)) {
+        throw SyntaxError('import map must have "imports"');
+    }
+    if (!(json.imports instanceof Object)) {
+        throw SyntaxError('"imports" must be Object');
+    }
+    if (Object.values(json.imports).some((value)=>typeof value !== "string"
+    )) {
+        throw SyntaxError('the value of properties in "imports" must be string');
+    }
+    if ("scopes" in json) {
+        if (!(json.scopes instanceof Object)) {
+            throw SyntaxError('"scopes" must be Object');
+        }
+        for (const value of Object.values(json.scopes)){
+            if (!(value instanceof Object)) {
+                throw SyntaxError('the value of properties in "scopes" must be object');
+            }
+            if (Object.values(value).some((value2)=>typeof value2 !== "string"
+            )) {
+                throw SyntaxError('the value of properties in any object in "scopes" must be string');
+            }
+        }
+    }
 }
 const postMessage = (data)=>self.postMessage(data)
 ;
@@ -2715,10 +2740,10 @@ self.addEventListener("message", async (event)=>{
     });
     try {
         await initialized;
-        const { entryURL , reload , ...options } = event.data;
+        const { entryURL , reload , importmap , ...options } = event.data;
         const { response  } = await fetch1(entryURL);
         const loader = getLoader(response);
-        decodeURI(entryURL);
+        const importMap = importmap ? (await fetchImportMap(new URL(importmap, entryURL), reload)).json : undefined;
         const result = await build({
             stdin: {
                 contents: await response.text(),
@@ -2730,6 +2755,7 @@ self.addEventListener("message", async (event)=>{
                 remoteLoader({
                     baseURL: new URL(entryURL),
                     reload,
+                    importmap: importMap,
                     progressCallback: postMessage
                 }), 
             ]
@@ -2746,6 +2772,17 @@ self.addEventListener("message", async (event)=>{
                 data: {
                     status: e.status,
                     statusText: e.statusText
+                }
+            });
+            return;
+        }
+        if (e instanceof SyntaxError) {
+            console.error(e);
+            postMessage({
+                type: "unexpected error",
+                data: {
+                    stack: e.stack,
+                    message: e.message
                 }
             });
             return;
