@@ -365,12 +365,14 @@ function parseSearchParams(searchParam) {
     const entryURL = params.get("url") ?? "";
     const reload = params.get("reload") === null ? false : true;
     const sourcemap = params.get("sourcemap") === null ? false : "inline";
+    const external = params.getAll("external");
     return {
         bundle,
         minify,
         format: isFormat(format) ? format : "esm",
         charset,
         entryURL,
+        external,
         run,
         jsxFactory,
         jsxFragment,
@@ -409,9 +411,7 @@ async function* build(params) {
     try {
         while(true){
             const data = await waitMessage();
-            if (data.type === "error" || data.type === "unexpected") {
-                throw data;
-            }
+            if (data.type === "unexpected error") throw data;
             yield data;
             if (data.type === "built") break;
             continue;
@@ -467,32 +467,53 @@ const HeadlessApp = (props)=>{
     T1(()=>{
         (async ()=>{
             console.group("build log");
-            for await (const data of build(props.options)){
-                console.log(data);
-                switch(data.type){
-                    case "built":
-                        {
-                            setLog((old)=>`${old}\nFinish building.`
+            try {
+                for await (const data of build(props.options)){
+                    console.log(data);
+                    switch(data.type){
+                        case "built":
+                            {
+                                setLog((old)=>`${old}\nFinish building.`
+                                );
+                                const blob = new Blob([
+                                    data.code
+                                ], {
+                                    type: "application/javascript;charset=UTF-8"
+                                });
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, "_self");
+                                URL.revokeObjectURL(url);
+                                break;
+                            }
+                        case "remote":
+                            setLog((old)=>`${old}\nDownload ${decodeURI(data.url)}`
                             );
-                            const blob = new Blob([
-                                data.code
-                            ], {
-                                type: "application/javascript;charset=UTF-8"
-                            });
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, "_self");
-                            URL.revokeObjectURL(url);
                             break;
-                        }
-                    case "remote":
-                        setLog((old)=>`${old}\nDownload ${decodeURI(data.url)}`
-                        );
-                        break;
-                    case "cache":
-                        setLog((old)=>`${old}\nUse cache: ${decodeURI(data.url)}`
-                        );
-                        break;
+                        case "cache":
+                            setLog((old)=>`${old}\nUse cache: ${decodeURI(data.url)}`
+                            );
+                            break;
+                        case "fetch error":
+                            setLog((old)=>`${old}\nNetwork Error: ${data.data.status} ${data.data.statusText}\n\tat ${decodeURI(data.url)}: `
+                            );
+                            break;
+                        case "build error":
+                            setLog((old)=>[
+                                    old,
+                                    ...data.data.errors.map(({ location , pluginName , text  })=>`[${pluginName || "esbuild"}]Build error: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
+                                    ),
+                                    ...data.data.warnings.map(({ location , pluginName , text  })=>`[${pluginName || "esbuild"}]Build warning: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
+                                    ), 
+                                ].join("\n")
+                            );
+                            break;
+                    }
                 }
+            } catch (e) {
+                if (e?.type !== "unexpected error") throw e;
+                const error = e;
+                setLog((old)=>`${old}\nUnexpected Error: ${JSON.stringify(error.data)}`
+                );
             }
             console.groupEnd();
         })();

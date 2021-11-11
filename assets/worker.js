@@ -2542,6 +2542,59 @@ async function fetchNetworkFirst(url) {
         };
     }
 }
+function relative(from, to) {
+    if (from === to) return "";
+    let fromStart = 1;
+    const fromEnd = from.length;
+    for(; fromStart < fromEnd; ++fromStart){
+        if (from.charCodeAt(fromStart) !== 47) break;
+    }
+    const fromLen = fromEnd - fromStart;
+    let toStart = 1;
+    const toEnd = to.length;
+    for(; toStart < toEnd; ++toStart){
+        if (to.charCodeAt(toStart) !== 47) break;
+    }
+    const toLen = toEnd - toStart;
+    const length = fromLen < toLen ? fromLen : toLen;
+    let lastCommonSep = -1;
+    let i = 0;
+    for(; i <= length; ++i){
+        if (i === length) {
+            if (toLen > length) {
+                if (to.charCodeAt(toStart + i) === 47) {
+                    return to.slice(toStart + i + 1);
+                } else if (i === 0) {
+                    return to.slice(toStart + i);
+                }
+            } else if (fromLen > length) {
+                if (from.charCodeAt(fromStart + i) === 47) {
+                    lastCommonSep = i;
+                } else if (i === 0) {
+                    lastCommonSep = 0;
+                }
+            }
+            break;
+        }
+        const fromCode = from.charCodeAt(fromStart + i);
+        const toCode = to.charCodeAt(toStart + i);
+        if (fromCode !== toCode) break;
+        else if (fromCode === 47) lastCommonSep = i;
+    }
+    let out = "";
+    for(i = fromStart + lastCommonSep + 1; i <= fromEnd; ++i){
+        if (i === fromEnd || from.charCodeAt(i) === 47) {
+            if (out.length === 0) out += "..";
+            else out += "/..";
+        }
+    }
+    if (out.length > 0) return out + to.slice(toStart + lastCommonSep);
+    else {
+        toStart += lastCommonSep;
+        if (to.charCodeAt(toStart) === 47) ++toStart;
+        return to.slice(toStart);
+    }
+}
 const loaderList = [
     "js",
     "jsx",
@@ -2578,22 +2631,31 @@ const remoteLoader = (options)=>({
                     external: true
                 };
                 const resolvedPath = importMap.imports?.[path] ?? path;
-                if (skip(path)) return {
-                    external: true
-                };
                 if (resolvedPath.startsWith("http")) {
-                    console.log(`(${path}, ${importer}) -> ${resolvedPath}`);
+                    console.log(`(${path}) -> ${resolvedPath}`);
+                    if (skip(resolvedPath)) {
+                        console.log(`skip ${resolvedPath}`);
+                        return {
+                            external: true,
+                            path: relative(baseURL.toString(), resolvedPath)
+                        };
+                    }
                     return {
                         path: decodeURI(resolvedPath),
                         namespace: name
                     };
                 }
+                importer = importer === "<stdin>" ? baseURL.toString() : importer;
                 const importURL = new URL(resolvedPath, importer).toString();
-                if (skip(path)) return {
-                    external: true
-                };
                 if (importURL.startsWith("http")) {
                     console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
+                    if (skip(importURL)) {
+                        console.log(`skip ${importURL}`);
+                        return {
+                            external: true,
+                            path: relative(baseURL.toString(), importURL)
+                        };
+                    }
                     return {
                         path: decodeURI(importURL),
                         namespace: name
@@ -2618,16 +2680,15 @@ const remoteLoader = (options)=>({
                         loader: getLoader(response)
                     };
                 } catch (e) {
-                    if (!e?.response) {
+                    if (!(e instanceof Response)) {
                         throw e;
                     }
-                    const res = e.response;
                     progressCallback?.({
-                        type: "error",
-                        url: res.url,
+                        type: "fetch error",
+                        url: e.url,
                         data: {
-                            status: res.status,
-                            statusText: res.statusText
+                            status: e.status,
+                            statusText: e.statusText
                         }
                     });
                     return;
@@ -2657,16 +2718,11 @@ self.addEventListener("message", async (event)=>{
         const { entryURL , reload , ...options } = event.data;
         const { response  } = await fetch1(entryURL);
         const loader = getLoader(response);
-        const url = decodeURI(entryURL);
-        const { host , pathname  } = new URL(url);
-        const sourcefile = pathname.split("/").pop();
-        const resolveDir = `${host}/${pathname.split("/").slice(0, -1).join("/")}`;
+        decodeURI(entryURL);
         const result = await build({
             stdin: {
-                contents: loader === "css" ? `@import "${url}";` : `import "${url}";`,
-                loader,
-                sourcefile,
-                resolveDir
+                contents: await response.text(),
+                loader
             },
             write: false,
             ...options,
@@ -2683,9 +2739,27 @@ self.addEventListener("message", async (event)=>{
             code: result.outputFiles[0].contents
         });
     } catch (e) {
+        if (e instanceof Response) {
+            postMessage({
+                type: "fetch error",
+                url: e.url,
+                data: {
+                    status: e.status,
+                    statusText: e.statusText
+                }
+            });
+            return;
+        }
+        if (e instanceof Error) {
+            postMessage({
+                type: "build error",
+                data: JSON.parse(JSON.stringify(e))
+            });
+            return;
+        }
         console.error(e);
         postMessage({
-            type: "unexpected",
+            type: "unexpected error",
             data: {
                 ...e
             }
