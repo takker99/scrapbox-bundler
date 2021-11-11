@@ -20,16 +20,13 @@ self.addEventListener<"message">("message", async (event) => {
     const { response } = await fetch(entryURL);
     const loader = getLoader(response);
     const url = decodeURI(entryURL);
-    const { host, pathname } = new URL(url);
-    const sourcefile = pathname.split("/").pop();
-    const resolveDir = `${host}/${pathname.split("/").slice(0, -1).join("/")}`;
+    // const { pathname } = new URL(url);
+    // const sourcefile = pathname.split("/").pop();
 
     const result = await build({
       stdin: {
-        contents: loader === "css" ? `@import "${url}";` : `import "${url}";`,
+        contents: await response.text(),
         loader,
-        sourcefile,
-        resolveDir,
       },
       write: false,
       ...options,

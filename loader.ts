@@ -78,6 +78,7 @@ export const remoteLoader = (
             namespace: name,
           };
         }
+        importer = importer === "<stdin>" ? baseURL.toString() : importer;
         const importURL = new URL(resolvedPath, importer).toString();
         if (skip(path)) return { external: true };
         if (importURL.startsWith("http")) {
