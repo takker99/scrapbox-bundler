@@ -2,7 +2,8 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { build, initialize } from "./deps/esbuild-wasm.ts";
-import { remoteLoader } from "./loader.ts";
+import { getLoader, remoteLoader } from "./loader.ts";
+import { fetch } from "./fetch.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
 
 const postMessage = (data: BuildResult) => self.postMessage(data);
@@ -16,9 +17,19 @@ self.addEventListener<"message">("message", async (event) => {
   try {
     await initialized;
     const { entryURL, reload, ...options } = (event.data) as BundleOptions;
+    const { response } = await fetch(entryURL);
+    const loader = getLoader(response);
+    const url = decodeURI(entryURL);
+    const { host, pathname } = new URL(url);
+    const sourcefile = pathname.split("/").pop();
+    const resolveDir = `${host}/${pathname.split("/").slice(0, -1).join("/")}`;
+
     const result = await build({
       stdin: {
-        contents: `import "${entryURL}";`,
+        contents: loader === "css" ? `@import "${url}";` : `import "${url}";`,
+        loader,
+        sourcefile,
+        resolveDir,
       },
       write: false,
       ...options,

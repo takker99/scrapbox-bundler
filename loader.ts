@@ -7,6 +7,7 @@ import {
   ImportMap,
   resolveImportMap,
 } from "https://deno.land/x/importmap@0.2.0/mod.ts";
+import { fetch } from "./fetch.ts";
 
 const loaderList = [
   "js",
@@ -22,7 +23,7 @@ const loaderList = [
   "binary",
   "default",
 ] as const;
-type Loader = (typeof loaderList)[number];
+export type Loader = (typeof loaderList)[number];
 function isLoader(loader: string): loader is Loader {
   return (loaderList as [
     string,
@@ -52,7 +53,7 @@ export const remoteLoader = (
   options: Options,
 ): Plugin => ({
   name,
-  async setup({ onResolve, onLoad, initialOptions: { external } }) {
+  setup({ onResolve, onLoad, initialOptions: { external } }) {
     const {
       importmap = { imports: {} },
       baseURL,
@@ -60,12 +61,6 @@ export const remoteLoader = (
       progressCallback,
     } = options ?? {};
     const importMap = resolveImportMap(importmap, baseURL);
-
-    const cache = await globalThis.caches.open("v1");
-    if (reload) {
-      const keys = await cache.keys();
-      await Promise.all(keys.map((key) => cache.delete(key)));
-    }
 
     const skip = (path: string) => external?.includes?.(path) ?? false;
 
@@ -79,7 +74,7 @@ export const remoteLoader = (
         if (resolvedPath.startsWith("http")) {
           console.log(`(${path}, ${importer}) -> ${resolvedPath}`);
           return {
-            path: resolvedPath,
+            path: decodeURI(resolvedPath),
             namespace: name,
           };
         }
@@ -88,7 +83,7 @@ export const remoteLoader = (
         if (importURL.startsWith("http")) {
           console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
           return {
-            path: importURL,
+            path: decodeURI(importURL),
             namespace: name,
           };
         }
@@ -96,43 +91,30 @@ export const remoteLoader = (
       },
     );
     onLoad({ filter: /^http/, namespace: name }, async ({ path }) => {
-      const url = new URL(path);
-      if (url.hostname === "scrapbox.io") {
-        url.port = "";
-        url.protocol = "https:";
-        url.hostname = "scrapbox-proxy-server.vercel.app";
-      }
-      let res: Response | undefined;
-      const cachedRes = await cache.match(url.toString());
-      if (cachedRes) {
+      try {
+        const { type, response } = await fetch(path, reload);
         progressCallback?.({
-          type: "cache",
-          url: decodeURIComponent(url.toString()),
+          type,
+          url: response.url,
         });
-        res = cachedRes;
-      } else {
-        res = await fetch(url.toString());
-        if (!res.ok) {
-          progressCallback?.({
-            type: "error",
-            url: url.toString(),
-            data: { status: res.status, statusText: res.statusText },
-          });
-          return;
+        return { contents: await response.text(), loader: getLoader(response) };
+      } catch (e) {
+        if (!e?.response) {
+          throw e;
         }
+        const res = e.response as Response;
         progressCallback?.({
-          type: "remote",
-          url: decodeURIComponent(url.toString()),
+          type: "error",
+          url: res.url,
+          data: { status: res.status, statusText: res.statusText },
         });
-        cache.put(url.toString(), res.clone());
+        return;
       }
-
-      return { contents: await res.text(), loader: getLoader(res) };
     });
   },
 });
 
-function getLoader(response: Response): Loader {
+export function getLoader(response: Response): Loader {
   const url = response.url;
   const ext = url.split(".").pop();
   if (ext && isLoader(ext)) return ext;
