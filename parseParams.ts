@@ -15,6 +15,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const jsxFactory = params.get("jsxFactory") ?? "h";
   const jsxFragment = params.get("jsxFragment") ?? "Fragment";
   const entryURL = params.get("url") ?? "";
+  const reload = params.get("reload") === null ? false : true;
 
   return {
     bundle,
@@ -25,5 +26,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     run,
     jsxFactory,
     jsxFragment,
+    reload,
   };
 }

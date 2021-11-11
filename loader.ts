@@ -43,6 +43,7 @@ function isLoader(loader: string): loader is Loader {
 export interface Options {
   importmap?: ImportMap;
   baseURL: URL;
+  reload: boolean;
   progressCallback?: (message: ImportInfo) => void;
 }
 
@@ -55,13 +56,16 @@ export const remoteLoader = (
     const {
       importmap = { imports: {} },
       baseURL,
+      reload,
       progressCallback,
     } = options ?? {};
     const importMap = resolveImportMap(importmap, baseURL);
 
     const cache = await globalThis.caches.open("v1");
-    const keys = await cache.keys();
-    await Promise.all(keys.map((key) => cache.delete(key)));
+    if (reload) {
+      const keys = await cache.keys();
+      await Promise.all(keys.map((key) => cache.delete(key)));
+    }
 
     const skip = (path: string) => external?.includes?.(path) ?? false;
 

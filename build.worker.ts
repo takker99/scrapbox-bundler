@@ -15,7 +15,7 @@ self.addEventListener<"message">("message", async (event) => {
   });
   try {
     await initialized;
-    const { entryURL, ...options } = (event.data) as BundleOptions;
+    const { entryURL, reload, ...options } = (event.data) as BundleOptions;
     const result = await build({
       stdin: {
         contents: `import "${entryURL}";`,
@@ -25,6 +25,7 @@ self.addEventListener<"message">("message", async (event) => {
       plugins: [
         remoteLoader({
           baseURL: new URL(entryURL),
+          reload,
           progressCallback: postMessage,
         }),
       ],

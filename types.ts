@@ -39,4 +39,5 @@ export type BundleOptions = {
   entryURL: string;
   jsxFactory: string;
   jsxFragment: string;
+  reload: boolean;
 };
