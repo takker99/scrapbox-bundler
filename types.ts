@@ -37,6 +37,7 @@ export type BundleOptions = {
   charset?: "utf8";
   format: Format;
   entryURL: string;
+  external: string[];
   jsxFactory: string;
   jsxFragment: string;
   reload: boolean;

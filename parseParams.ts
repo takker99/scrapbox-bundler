@@ -17,6 +17,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const entryURL = params.get("url") ?? "";
   const reload = params.get("reload") === null ? false : true;
   const sourcemap = params.get("sourcemap") === null ? false : "inline";
+  const external = params.getAll("external");
 
   return {
     bundle,
@@ -24,6 +25,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     format: isFormat(format) ? format : "esm",
     charset,
     entryURL,
+    external,
     run,
     jsxFactory,
     jsxFragment,
