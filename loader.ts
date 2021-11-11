@@ -71,13 +71,13 @@ export const remoteLoader = (
 
     onResolve(
       { filter: /.*/ },
-      ({ path, importer, resolveDir }) => {
+      ({ path, importer }) => {
         if (skip(path)) return { external: true };
         const resolvedPath = importMap.imports?.[path] ?? path;
         if (skip(path)) return { external: true };
 
         if (resolvedPath.startsWith("http")) {
-          console.log({ path, importer, resolveDir }, "->", resolvedPath);
+          console.log(`(${path}, ${importer}) -> ${resolvedPath}`);
           return {
             path: resolvedPath,
             namespace: name,
@@ -86,11 +86,7 @@ export const remoteLoader = (
         const importURL = new URL(resolvedPath, importer).toString();
         if (skip(path)) return { external: true };
         if (importURL.startsWith("http")) {
-          console.log(
-            { path: resolvedPath, importer, resolveDir },
-            "->",
-            importURL,
-          );
+          console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
           return {
             path: importURL,
             namespace: name,
