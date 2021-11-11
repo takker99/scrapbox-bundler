@@ -8,7 +8,7 @@ import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import type { BundleOptions } from "./types.ts";
 
-const { runnow, ...initialOptions } = parseSearchParams(location.search);
+const { run, ...initialOptions } = parseSearchParams(location.search);
 
 const App = () => {
   return (
@@ -118,6 +118,6 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");
 render(
-  runnow ? <HeadlessApp options={initialOptions} /> : <App />,
+  run ? <HeadlessApp options={initialOptions} /> : <App />,
   app,
 );
