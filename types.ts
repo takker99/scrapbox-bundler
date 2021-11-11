@@ -40,4 +40,5 @@ export type BundleOptions = {
   jsxFactory: string;
   jsxFragment: string;
   reload: boolean;
+  sourcemap: false | "inline";
 };
