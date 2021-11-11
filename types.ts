@@ -1,5 +1,7 @@
-export type ErrorInfo = {
-  type: "error";
+import type { BuildFailure } from "./deps/esbuild-wasm.ts";
+
+export type FetchErrorInfo = {
+  type: "fetch error";
   url: string;
   data: {
     status: number;
@@ -14,17 +16,26 @@ export type CacheInfo = {
   url: string;
   type: "cache";
 };
-export type ImportInfo = RemoteInfo | CacheInfo | ErrorInfo;
+export type ImportInfo = RemoteInfo | CacheInfo | FetchErrorInfo;
 
 export type BuiltInfo = {
   type: "built";
   code: Uint8Array;
 };
+export type BuildErrorInfo = {
+  type: "build error";
+  data: BuildFailure;
+};
 export type UnexpectedErrorInfo = {
-  type: "unexpected";
+  type: "unexpected error";
   data: unknown;
 };
-export type BuildResult = ImportInfo | BuiltInfo | UnexpectedErrorInfo;
+export type BuildResult =
+  | ImportInfo
+  | BuiltInfo
+  | BuildErrorInfo
+  | UnexpectedErrorInfo;
+export type ErrorInfo = FetchErrorInfo | BuildErrorInfo | UnexpectedErrorInfo;
 
 const formatList = ["esm", "iife", "cjs"] as const;
 export type Format = (typeof formatList)[number];

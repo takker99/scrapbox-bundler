@@ -22,9 +22,7 @@ export async function* build(params: BundleOptions) {
   try {
     while (true) {
       const data = await waitMessage();
-      if (data.type === "error" || data.type === "unexpected") {
-        throw data;
-      }
+      if (data.type === "unexpected error") throw data;
       yield data;
       if (data.type === "built") break;
       continue;

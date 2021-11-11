@@ -104,7 +104,7 @@ export const remoteLoader = (
           throw e;
         }
         progressCallback?.({
-          type: "error",
+          type: "fetch error",
           url: e.url,
           data: { status: e.status, statusText: e.statusText },
         });

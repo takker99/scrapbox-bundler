@@ -100,22 +100,46 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
             case "cache":
               setLog((old) => `${old}\nUse cache: ${decodeURI(data.url)}`);
               break;
+            case "fetch error":
+              setLog((old) =>
+                `${old}\nNetwork Error: ${data.data.status} ${data.data.statusText}\n\tat ${
+                  decodeURI(data.url)
+                }: `
+              );
+              break;
+            case "build error":
+              setLog((old) =>
+                [
+                  old,
+                  ...data.data.errors.map((
+                    { location, pluginName, text },
+                  ) =>
+                    `[${
+                      pluginName || "esbuild"
+                    }]Build error: ${text} \n\tat ${location
+                      ?.file}\n\t${location
+                      ?.lineText}\n\t${location?.suggestion}`
+                  ),
+                  ...data.data.warnings.map((
+                    { location, pluginName, text },
+                  ) =>
+                    `[${
+                      pluginName || "esbuild"
+                    }]Build warning: ${text} \n\tat ${location
+                      ?.file}\n\t${location
+                      ?.lineText}\n\t${location?.suggestion}`
+                  ),
+                ].join("\n")
+              );
+              break;
           }
         }
       } catch (e) {
-        if (!e?.type) throw e;
-        const error = e as (ErrorInfo | UnexpectedErrorInfo);
-        if (error.type === "error") {
-          setLog((old) =>
-            `${old}\nNetwork Error: ${error.data.status} ${error.data.statusText}\n\tat ${
-              decodeURI(error.url)
-            }: `
-          );
-        } else {
-          setLog((old) =>
-            `${old}\nUnexpected Error: ${JSON.stringify(error.data)}`
-          );
-        }
+        if (e?.type !== "unexpected error") throw e;
+        const error = e as UnexpectedErrorInfo;
+        setLog((old) =>
+          `${old}\nUnexpected Error: ${JSON.stringify(error.data)}`
+        );
       }
       console.groupEnd();
     })();

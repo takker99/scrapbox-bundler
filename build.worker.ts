@@ -1,7 +1,7 @@
 /// <reference no-default-lib="true" />
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-import { build, initialize } from "./deps/esbuild-wasm.ts";
+import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
 import { getLoader, remoteLoader } from "./loader.ts";
 import { fetch } from "./fetch.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
@@ -45,13 +45,17 @@ self.addEventListener<"message">("message", async (event) => {
   } catch (e) {
     if (e instanceof Response) {
       postMessage({
-        type: "error",
+        type: "fetch error",
         url: e.url,
         data: { status: e.status, statusText: e.statusText },
       });
       return;
     }
+    if (e instanceof Error) {
+      postMessage({ type: "build error", data: { ...e } as BuildFailure });
+      return;
+    }
     console.error(e);
-    postMessage({ type: "unexpected", data: { ...e } });
+    postMessage({ type: "unexpected error", data: { ...e } });
   }
 });
