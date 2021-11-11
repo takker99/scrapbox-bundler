@@ -24,7 +24,7 @@ self.addEventListener<"message">("message", async (event) => {
     const loader = getLoader(response);
 
     const importMap = importmap
-      ? (await fetchImportMap(importmap, reload)).json
+      ? (await fetchImportMap(new URL(importmap, entryURL), reload)).json
       : undefined;
 
     const result = await build({
