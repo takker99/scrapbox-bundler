@@ -100,14 +100,13 @@ export const remoteLoader = (
         });
         return { contents: await response.text(), loader: getLoader(response) };
       } catch (e) {
-        if (!e?.response) {
+        if (!(e instanceof Response)) {
           throw e;
         }
-        const res = e.response as Response;
         progressCallback?.({
           type: "error",
-          url: res.url,
-          data: { status: res.status, statusText: res.statusText },
+          url: e.url,
+          data: { status: e.status, statusText: e.statusText },
         });
         return;
       }

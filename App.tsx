@@ -6,7 +6,7 @@
 import { Fragment, h, render, useEffect, useState } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
-import type { BundleOptions } from "./types.ts";
+import type { BundleOptions, ErrorInfo, UnexpectedErrorInfo } from "./types.ts";
 
 const { run, ...initialOptions } = parseSearchParams(location.search);
 
@@ -80,25 +80,41 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
   useEffect(() => {
     (async () => {
       console.group("build log");
-      for await (const data of build(props.options)) {
-        console.log(data);
-        switch (data.type) {
-          case "built": {
-            setLog((old) => `${old}\nFinish building.`);
-            const blob = new Blob([data.code], {
-              type: "application/javascript;charset=UTF-8",
-            });
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_self");
-            URL.revokeObjectURL(url);
-            break;
+      try {
+        for await (const data of build(props.options)) {
+          console.log(data);
+          switch (data.type) {
+            case "built": {
+              setLog((old) => `${old}\nFinish building.`);
+              const blob = new Blob([data.code], {
+                type: "application/javascript;charset=UTF-8",
+              });
+              const url = URL.createObjectURL(blob);
+              window.open(url, "_self");
+              URL.revokeObjectURL(url);
+              break;
+            }
+            case "remote":
+              setLog((old) => `${old}\nDownload ${decodeURI(data.url)}`);
+              break;
+            case "cache":
+              setLog((old) => `${old}\nUse cache: ${decodeURI(data.url)}`);
+              break;
           }
-          case "remote":
-            setLog((old) => `${old}\nDownload ${decodeURI(data.url)}`);
-            break;
-          case "cache":
-            setLog((old) => `${old}\nUse cache: ${decodeURI(data.url)}`);
-            break;
+        }
+      } catch (e) {
+        if (!e?.type) throw e;
+        const error = e as (ErrorInfo | UnexpectedErrorInfo);
+        if (error.type === "error") {
+          setLog((old) =>
+            `${old}\nNetwork Error: ${error.data.status} ${error.data.statusText}\n\tat ${
+              decodeURI(error.url)
+            }: `
+          );
+        } else {
+          setLog((old) =>
+            `${old}\nUnexpected Error: ${JSON.stringify(error.data)}`
+          );
         }
       }
       console.groupEnd();
