@@ -2504,6 +2504,44 @@ function resolveImportMap(importMap, baseURL) {
         scopes: sortedAndNormalizedScopes
     };
 }
+let cache;
+async function fetch1(path, reload = false) {
+    const url = new URL(path);
+    if (url.hostname === "scrapbox.io") {
+        url.port = "";
+        url.protocol = "https:";
+        url.hostname = "scrapbox-proxy-server.vercel.app";
+    }
+    cache ??= await globalThis.caches.open("v1");
+    if (reload) {
+        return await fetchNetworkFirst(url);
+    }
+    const res = await cache.match(url.toString());
+    if (!res) return await fetchNetworkFirst(url);
+    return {
+        type: "cache",
+        response: res
+    };
+}
+async function fetchNetworkFirst(url) {
+    cache ??= await globalThis.caches.open("v1");
+    try {
+        const res = await globalThis.fetch(url.toString());
+        if (!res.ok) throw res;
+        cache.put(url.toString(), res.clone());
+        return {
+            type: "remote",
+            response: res
+        };
+    } catch (e) {
+        const res = await cache.match(url.toString());
+        if (!res) throw e;
+        return {
+            type: "cache",
+            response: res
+        };
+    }
+}
 const loaderList = [
     "js",
     "jsx",
@@ -2524,19 +2562,13 @@ function isLoader(loader) {
 const name = "remote-resource";
 const remoteLoader = (options)=>({
         name,
-        async setup ({ onResolve , onLoad , initialOptions: { external  }  }) {
+        setup ({ onResolve , onLoad , initialOptions: { external  }  }) {
             const { importmap ={
                 imports: {
                 }
             } , baseURL , reload , progressCallback ,  } = options ?? {
             };
             const importMap = resolveImportMap(importmap, baseURL);
-            const cache = await globalThis.caches.open("v1");
-            if (reload) {
-                const keys = await cache.keys();
-                await Promise.all(keys.map((key)=>cache.delete(key)
-                ));
-            }
             const skip = (path)=>external?.includes?.(path) ?? false
             ;
             onResolve({
@@ -2552,7 +2584,7 @@ const remoteLoader = (options)=>({
                 if (resolvedPath.startsWith("http")) {
                     console.log(`(${path}, ${importer}) -> ${resolvedPath}`);
                     return {
-                        path: resolvedPath,
+                        path: decodeURI(resolvedPath),
                         namespace: name
                     };
                 }
@@ -2563,7 +2595,7 @@ const remoteLoader = (options)=>({
                 if (importURL.startsWith("http")) {
                     console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
                     return {
-                        path: importURL,
+                        path: decodeURI(importURL),
                         namespace: name
                     };
                 }
@@ -2575,43 +2607,31 @@ const remoteLoader = (options)=>({
                 filter: /^http/,
                 namespace: name
             }, async ({ path  })=>{
-                const url = new URL(path);
-                if (url.hostname === "scrapbox.io") {
-                    url.port = "";
-                    url.protocol = "https:";
-                    url.hostname = "scrapbox-proxy-server.vercel.app";
-                }
-                let res;
-                const cachedRes = await cache.match(url.toString());
-                if (cachedRes) {
+                try {
+                    const { type , response  } = await fetch1(path, reload);
                     progressCallback?.({
-                        type: "cache",
-                        url: url.toString()
+                        type,
+                        url: response.url
                     });
-                    res = cachedRes;
-                } else {
-                    res = await fetch(url.toString());
-                    if (!res.ok) {
-                        progressCallback?.({
-                            type: "error",
-                            url: url.toString(),
-                            data: {
-                                status: res.status,
-                                statusText: res.statusText
-                            }
-                        });
-                        return;
+                    return {
+                        contents: await response.text(),
+                        loader: getLoader(response)
+                    };
+                } catch (e) {
+                    if (!e?.response) {
+                        throw e;
                     }
+                    const res = e.response;
                     progressCallback?.({
-                        type: "remote",
-                        url: url.toString()
+                        type: "error",
+                        url: res.url,
+                        data: {
+                            status: res.status,
+                            statusText: res.statusText
+                        }
                     });
-                    cache.put(url.toString(), res.clone());
+                    return;
                 }
-                return {
-                    contents: await res.text(),
-                    loader: getLoader(res)
-                };
             });
         }
     })
@@ -2635,9 +2655,18 @@ self.addEventListener("message", async (event)=>{
     try {
         await initialized;
         const { entryURL , reload , ...options } = event.data;
+        const { response  } = await fetch1(entryURL);
+        const loader = getLoader(response);
+        const url = decodeURI(entryURL);
+        const { host , pathname  } = new URL(url);
+        const sourcefile = pathname.split("/").pop();
+        const resolveDir = `${host}/${pathname.split("/").slice(0, -1).join("/")}`;
         const result = await build({
             stdin: {
-                contents: `import "${entryURL}";`
+                contents: loader === "css" ? `@import "${url}";` : `import "${url}";`,
+                loader,
+                sourcefile,
+                resolveDir
             },
             write: false,
             ...options,
@@ -2654,9 +2683,12 @@ self.addEventListener("message", async (event)=>{
             code: result.outputFiles[0].contents
         });
     } catch (e) {
+        console.error(e);
         postMessage({
             type: "unexpected",
-            data: e
+            data: {
+                ...e
+            }
         });
     }
 });

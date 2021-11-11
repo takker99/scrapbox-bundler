@@ -485,11 +485,11 @@ const HeadlessApp = (props)=>{
                             break;
                         }
                     case "remote":
-                        setLog((old)=>`${old}\nDownload ${data.url}`
+                        setLog((old)=>`${old}\nDownload ${decodeURI(data.url)}`
                         );
                         break;
                     case "cache":
-                        setLog((old)=>`${old}\nUse cache: ${data.url}`
+                        setLog((old)=>`${old}\nUse cache: ${decodeURI(data.url)}`
                         );
                         break;
                 }
