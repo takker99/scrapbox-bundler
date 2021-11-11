@@ -52,7 +52,10 @@ self.addEventListener<"message">("message", async (event) => {
       return;
     }
     if (e instanceof Error) {
-      postMessage({ type: "build error", data: { ...e } as BuildFailure });
+      postMessage({
+        type: "build error",
+        data: JSON.parse(JSON.stringify(e)) as BuildFailure,
+      });
       return;
     }
     console.error(e);
