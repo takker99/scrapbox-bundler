@@ -79,7 +79,9 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
   const [log, setLog] = useState<string>("");
   useEffect(() => {
     (async () => {
+      console.group("build log");
       for await (const data of build(props.options)) {
+        console.log(data);
         switch (data.type) {
           case "built": {
             setLog((old) => `${old}\nFinish building.`);
@@ -99,6 +101,7 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
             break;
         }
       }
+      console.groupEnd();
     })();
   }, []);
 
