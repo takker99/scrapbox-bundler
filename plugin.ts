@@ -20,7 +20,7 @@ export const remoteLoader = (
   options: Options,
 ): Plugin => ({
   name,
-  setup({ onResolve, onLoad, initialOptions: { external } }) {
+  setup({ onResolve, onLoad, initialOptions: { external = [] } }) {
     const {
       importmap = { imports: {} },
       baseURL,
@@ -28,8 +28,10 @@ export const remoteLoader = (
       progressCallback,
     } = options ?? {};
     const importMap = resolveImportMap(importmap, baseURL);
+    external = external.map((path) => new URL(path, baseURL).href);
+    console.log(external);
 
-    const skip = (path: string) => external?.includes?.(path) ?? false;
+    const skip = (path: string) => external.includes(path);
 
     onResolve(
       { filter: /.*/ },
