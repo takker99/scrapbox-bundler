@@ -8,6 +8,7 @@ import {
   resolveImportMap,
 } from "https://deno.land/x/importmap@0.2.0/mod.ts";
 import { fetch } from "./fetch.ts";
+import { relative } from "./path.ts";
 
 const loaderList = [
   "js",
@@ -69,10 +70,16 @@ export const remoteLoader = (
       ({ path, importer }) => {
         if (skip(path)) return { external: true };
         const resolvedPath = importMap.imports?.[path] ?? path;
-        if (skip(resolvedPath)) return { external: true };
 
         if (resolvedPath.startsWith("http")) {
           console.log(`(${path}) -> ${resolvedPath}`);
+          if (skip(resolvedPath)) {
+            console.log(`skip ${resolvedPath}`);
+            return {
+              external: true,
+              path: relative(baseURL.toString(), resolvedPath),
+            };
+          }
           return {
             path: decodeURI(resolvedPath),
             namespace: name,
@@ -80,9 +87,15 @@ export const remoteLoader = (
         }
         importer = importer === "<stdin>" ? baseURL.toString() : importer;
         const importURL = new URL(resolvedPath, importer).toString();
-        if (skip(importURL)) return { external: true };
         if (importURL.startsWith("http")) {
           console.log(`(${resolvedPath}, ${importer}) -> ${importURL}`);
+          if (skip(importURL)) {
+            console.log(`skip ${importURL}`);
+            return {
+              external: true,
+              path: relative(baseURL.toString(), importURL),
+            };
+          }
           return {
             path: decodeURI(importURL),
             namespace: name,
