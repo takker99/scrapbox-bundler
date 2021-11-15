@@ -2741,12 +2741,24 @@ self.addEventListener("message", async (event)=>{
     try {
         await initialized;
         const { entryURL , reload , importmap , ...options } = event.data;
-        const { response  } = await fetch1(entryURL);
-        const loader = getLoader(response);
-        const importMap = importmap ? (await fetchImportMap(new URL(importmap, entryURL), reload)).json : undefined;
+        const entryPointRes = await fetch1(entryURL, reload);
+        postMessage({
+            type: entryPointRes.type,
+            url: entryPointRes.response.url
+        });
+        const loader = getLoader(entryPointRes.response);
+        let importMap = undefined;
+        if (importmap) {
+            const { type , json  } = await fetchImportMap(new URL(importmap, entryURL), reload);
+            postMessage({
+                type,
+                url: new URL(importmap, entryURL).toString()
+            });
+            importMap = json;
+        }
         const result = await build({
             stdin: {
-                contents: await response.text(),
+                contents: await entryPointRes.response.text(),
                 loader
             },
             write: false,
