@@ -20,7 +20,7 @@ self.addEventListener<"message">("message", async (event) => {
     await initialized;
     const { entryURL, reload, importmap, ...options } =
       (event.data) as BundleOptions;
-    const { response } = await fetch(entryURL);
+    const { response } = await fetch(entryURL, reload);
     const loader = getLoader(response);
 
     const importMap = importmap
