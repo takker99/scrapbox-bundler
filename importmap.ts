@@ -1,5 +1,6 @@
 import { fetch } from "./fetch.ts";
 import type { ImportMap } from "./deps/importmap.ts";
+export type { ImportMap };
 
 export async function fetchImportMap(url: URL | string, reload = false) {
   const { type, response } = await fetch(url, reload);

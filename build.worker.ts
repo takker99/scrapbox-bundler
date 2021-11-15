@@ -5,7 +5,7 @@ import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
 import { remoteLoader } from "./plugin.ts";
 import { getLoader } from "././loader.ts";
 import { fetch } from "./fetch.ts";
-import { fetchImportMap } from "./importmap.ts";
+import { fetchImportMap, ImportMap } from "./importmap.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
 
 const postMessage = (data: BuildResult) => self.postMessage(data);
@@ -20,16 +20,23 @@ self.addEventListener<"message">("message", async (event) => {
     await initialized;
     const { entryURL, reload, importmap, ...options } =
       (event.data) as BundleOptions;
-    const { response } = await fetch(entryURL, reload);
-    const loader = getLoader(response);
+    const entryPointRes = await fetch(entryURL, reload);
+    postMessage({ type: entryPointRes.type, url: entryPointRes.response.url });
+    const loader = getLoader(entryPointRes.response);
 
-    const importMap = importmap
-      ? (await fetchImportMap(new URL(importmap, entryURL), reload)).json
-      : undefined;
+    let importMap: ImportMap | undefined = undefined;
+    if (importmap) {
+      const { type, json } = await fetchImportMap(
+        new URL(importmap, entryURL),
+        reload,
+      );
+      postMessage({ type, url: new URL(importmap, entryURL).toString() });
+      importMap = json;
+    }
 
     const result = await build({
       stdin: {
-        contents: await response.text(),
+        contents: await entryPointRes.response.text(),
         loader,
       },
       write: false,
