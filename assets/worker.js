@@ -2504,14 +2504,85 @@ function resolveImportMap(importMap, baseURL) {
         scopes: sortedAndNormalizedScopes
     };
 }
-let cache;
-async function fetch1(path, reload = false) {
-    const url = new URL(path);
-    if (url.hostname === "scrapbox.io") {
-        url.port = "";
-        url.protocol = "https:";
-        url.hostname = "scrapbox-proxy-server.vercel.app";
+function extract(path) {
+    const match = path.match(/^\/([^\/]+)\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
+    if (!match) return [];
+    const [, owner, repo, atTag, file] = match;
+    return [
+        owner,
+        repo,
+        atTag ? atTag.slice(1) : "master",
+        file?.replace(/^\/|\/$/g, "") || "mod.ts", 
+    ];
+}
+function proxy3(pathname) {
+    const [owner, repo, tag, file] = extract(pathname);
+    if (!owner || !repo) {
+        throw URIError("invalid pax.deno.dev URL");
     }
+    const host = "https://raw.githubusercontent.com";
+    const location = [
+        host,
+        owner,
+        repo,
+        tag,
+        file
+    ].join("/");
+    return new URL(location);
+}
+const hostname = "deno.land";
+async function proxy1(pathname) {
+    {
+        const match = pathname.match(/^\/x\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
+        if (match) {
+            const name = match[1];
+            const version = match[2]?.slice?.(1);
+            const file = match[3] ?? "";
+            return await resolve("x", name, version, file);
+        }
+    }
+    const match = pathname.match(/^\/std(@[^\/]+)?\/([^\/@]+)(\/.*)?/);
+    if (!match) throw URIError(`"${pathname}" is an invalid deno.land pathname`);
+    const name = match[2];
+    const version = match[1]?.slice?.(1);
+    const file = match[3] ?? "";
+    return await resolve("std", name, version, file);
+}
+async function resolve(type, name, version, file) {
+    if (version !== undefined) {
+        return new URL(`https://${hostname}/${type === "x" ? `x/${name}@${version}` : `std@${version}/${name}`}${file}`);
+    }
+    const res = await fetch(`https://cdn.deno.land/${type === "x" ? name : "std"}/meta/versions.json`);
+    if (!res.ok) {
+        throw {
+            status: res.status,
+            statusText: res.statusText
+        };
+    }
+    const { latest  } = await res.json();
+    return await resolve(type, name, latest, file);
+}
+function proxy2(url) {
+    switch(url.hostname){
+        case "scrapbox.io":
+            {
+                const newURL = new URL(url);
+                newURL.port = "";
+                newURL.protocol = "https:";
+                newURL.hostname = "scrapbox-proxy-server.vercel.app";
+                return Promise.resolve(newURL);
+            }
+        case "pax.deno.dev":
+            return Promise.resolve(proxy3(url.pathname));
+        case "deno.land":
+            return proxy1(url.pathname);
+        default:
+            return Promise.resolve(url);
+    }
+}
+let cache;
+async function fetch1(path, reload = false, proxy = proxy2) {
+    const url = await proxy(new URL(path));
     cache ??= await globalThis.caches.open("v1");
     if (reload) {
         return await fetchNetworkFirst(url);
