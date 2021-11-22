@@ -2504,85 +2504,9 @@ function resolveImportMap(importMap, baseURL) {
         scopes: sortedAndNormalizedScopes
     };
 }
-function extract(path) {
-    const match = path.match(/^\/([^\/]+)\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
-    if (!match) return [];
-    const [, owner, repo, atTag, file] = match;
-    return [
-        owner,
-        repo,
-        atTag ? atTag.slice(1) : "master",
-        file?.replace(/^\/|\/$/g, "") || "mod.ts", 
-    ];
-}
-function proxy3(pathname) {
-    const [owner, repo, tag, file] = extract(pathname);
-    if (!owner || !repo) {
-        throw URIError("invalid pax.deno.dev URL");
-    }
-    const host = "https://raw.githubusercontent.com";
-    const location = [
-        host,
-        owner,
-        repo,
-        tag,
-        file
-    ].join("/");
-    return new URL(location);
-}
-const hostname = "deno.land";
-async function proxy1(pathname) {
-    {
-        const match = pathname.match(/^\/x\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
-        if (match) {
-            const name = match[1];
-            const version = match[2]?.slice?.(1);
-            const file = match[3] ?? "";
-            return await resolve("x", name, version, file);
-        }
-    }
-    const match = pathname.match(/^\/std(@[^\/]+)?\/([^\/@]+)(\/.*)?/);
-    if (!match) throw URIError(`"${pathname}" is an invalid deno.land pathname`);
-    const name = match[2];
-    const version = match[1]?.slice?.(1);
-    const file = match[3] ?? "";
-    return await resolve("std", name, version, file);
-}
-async function resolve(type, name, version, file) {
-    if (version !== undefined) {
-        return new URL(`https://${hostname}/${type === "x" ? `x/${name}@${version}` : `std@${version}/${name}`}${file}`);
-    }
-    const res = await fetch(`https://cdn.deno.land/${type === "x" ? name : "std"}/meta/versions.json`);
-    if (!res.ok) {
-        throw {
-            status: res.status,
-            statusText: res.statusText
-        };
-    }
-    const { latest  } = await res.json();
-    return await resolve(type, name, latest, file);
-}
-function proxy2(url) {
-    switch(url.hostname){
-        case "scrapbox.io":
-            {
-                const newURL = new URL(url);
-                newURL.port = "";
-                newURL.protocol = "https:";
-                newURL.hostname = "scrapbox-proxy-server.vercel.app";
-                return Promise.resolve(newURL);
-            }
-        case "pax.deno.dev":
-            return Promise.resolve(proxy3(url.pathname));
-        case "deno.land":
-            return proxy1(url.pathname);
-        default:
-            return Promise.resolve(url);
-    }
-}
 let cache;
-async function fetch1(path, reload = false, proxy = proxy2) {
-    const url = await proxy(new URL(path));
+async function fetch1(path, reload = false) {
+    const url = new URL(path);
     cache ??= await globalThis.caches.open("v1");
     if (reload) {
         return await fetchNetworkFirst(url);
@@ -2679,6 +2603,83 @@ function mimeTypeToLoader(mimeType) {
             return "text";
     }
 }
+function extract(path) {
+    const match = path.match(/^\/([^\/]+)\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
+    if (!match) return [];
+    const [, owner, repo, atTag, file] = match;
+    return [
+        owner,
+        repo,
+        atTag ? atTag.slice(1) : "master",
+        file?.replace(/^\/|\/$/g, "") || "mod.ts", 
+    ];
+}
+function proxy(pathname) {
+    const [owner, repo, tag, file] = extract(pathname);
+    if (!owner || !repo) {
+        throw URIError("invalid pax.deno.dev URL");
+    }
+    const host = "https://raw.githubusercontent.com";
+    const location = [
+        host,
+        owner,
+        repo,
+        tag,
+        file
+    ].join("/");
+    return new URL(location);
+}
+const hostname = "deno.land";
+async function proxy1(pathname) {
+    {
+        const match = pathname.match(/^\/x\/([^\/@]+)(@[^\/]+)?(\/.*)?/);
+        if (match) {
+            const name = match[1];
+            const version = match[2]?.slice?.(1);
+            const file = match[3] ?? "";
+            return await resolve("x", name, version, file);
+        }
+    }
+    const match = pathname.match(/^\/std(@[^\/]+)?\/([^\/@]+)(\/.*)?/);
+    if (!match) throw URIError(`"${pathname}" is an invalid deno.land pathname`);
+    const name = match[2];
+    const version = match[1]?.slice?.(1);
+    const file = match[3] ?? "";
+    return await resolve("std", name, version, file);
+}
+async function resolve(type, name, version, file) {
+    if (version !== undefined) {
+        return new URL(`https://${hostname}/${type === "x" ? `x/${name}@${version}` : `std@${version}/${name}`}${file}`);
+    }
+    const res = await fetch(`https://cdn.deno.land/${type === "x" ? name : "std"}/meta/versions.json`);
+    if (!res.ok) {
+        throw {
+            status: res.status,
+            statusText: res.statusText
+        };
+    }
+    const { latest  } = await res.json();
+    console.info(`use ${type === "x" ? `x/${name}@${latest}` : `std@${latest}/${name}`} as the latest version of ${type}/${name}`);
+    return await resolve(type, name, latest, file);
+}
+function proxy2(url) {
+    switch(url.hostname){
+        case "scrapbox.io":
+            {
+                const newURL = new URL(url.toString());
+                newURL.port = "";
+                newURL.protocol = "https:";
+                newURL.hostname = "scrapbox-proxy-server.vercel.app";
+                return Promise.resolve(newURL);
+            }
+        case "pax.deno.dev":
+            return Promise.resolve(proxy(url.pathname));
+        case "deno.land":
+            return proxy1(url.pathname);
+        default:
+            return Promise.resolve(url);
+    }
+}
 const name = "remote-resource";
 const remoteLoader = (options)=>({
         name,
@@ -2696,21 +2697,22 @@ const remoteLoader = (options)=>({
             ;
             onResolve({
                 filter: /.*/
-            }, ({ path , importer  })=>{
+            }, async ({ path , importer  })=>{
                 if (skip(path)) return {
                     external: true
                 };
                 const resolvedPath = importMap.imports?.[path] ?? path;
                 if (resolvedPath.startsWith("http")) {
-                    if (skip(resolvedPath)) {
-                        console.log(`skip ${resolvedPath}`);
+                    const url = await proxy2(new URL(resolvedPath));
+                    if (skip(url.toString())) {
+                        console.log(`skip ${url}`);
                         return {
                             external: true,
-                            path: relative(baseURL, new URL(resolvedPath))
+                            path: relative(baseURL, url)
                         };
                     }
                     return {
-                        path: decodeURI(resolvedPath),
+                        path: decodeURI(url.toString()),
                         namespace: name
                     };
                 }
@@ -2718,15 +2720,16 @@ const remoteLoader = (options)=>({
                 const importURL = new URL(resolvedPath, importer).toString();
                 const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
                 if (resolvedPath2.startsWith("http")) {
-                    if (skip(resolvedPath2)) {
-                        console.log(`skip ${resolvedPath2}`);
+                    const url = await proxy2(new URL(resolvedPath2));
+                    if (skip(url.toString())) {
+                        console.log(`skip ${url}`);
                         return {
                             external: true,
-                            path: relative(baseURL, new URL(resolvedPath2))
+                            path: relative(baseURL, url)
                         };
                     }
                     return {
-                        path: decodeURI(resolvedPath2),
+                        path: decodeURI(url.toString()),
                         namespace: name
                     };
                 }
@@ -2812,7 +2815,8 @@ self.addEventListener("message", async (event)=>{
     try {
         await initialized;
         const { entryURL , reload , importmap , ...options } = event.data;
-        const entryPointRes = await fetch1(entryURL, reload);
+        const baseURL = await proxy2(new URL(entryURL));
+        const entryPointRes = await fetch1(baseURL, reload);
         postMessage({
             type: entryPointRes.type,
             url: entryPointRes.response.url
@@ -2820,10 +2824,11 @@ self.addEventListener("message", async (event)=>{
         const loader = getLoader(entryPointRes.response);
         let importMap = undefined;
         if (importmap) {
-            const { type , json  } = await fetchImportMap(new URL(importmap, entryURL), reload);
+            const url = await proxy2(new URL(importmap, entryURL));
+            const { type , json  } = await fetchImportMap(url, reload);
             postMessage({
                 type,
-                url: new URL(importmap, entryURL).toString()
+                url: url.toString()
             });
             importMap = json;
         }
@@ -2836,7 +2841,7 @@ self.addEventListener("message", async (event)=>{
             ...options,
             plugins: [
                 remoteLoader({
-                    baseURL: new URL(entryURL),
+                    baseURL,
                     reload,
                     importmap: importMap,
                     progressCallback: postMessage

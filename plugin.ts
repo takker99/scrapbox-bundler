@@ -4,13 +4,15 @@
 import type { Plugin } from "./deps/esbuild-wasm.ts";
 import type { ImportInfo } from "./types.ts";
 import { ImportMap, resolveImportMap } from "./deps/importmap.ts";
-import { fetch } from "./fetch.ts";
+import type { CustomFetch } from "./fetch.ts";
 import { relative } from "./path.ts";
 import { getLoader } from "./loader.ts";
+import { proxy } from "./proxy.ts";
 
 export interface Options {
   importmap?: ImportMap;
   baseURL: URL;
+  fetch: CustomFetch;
   reload: boolean;
   progressCallback?: (message: ImportInfo) => void;
 }
@@ -24,6 +26,7 @@ export const remoteLoader = (
     const {
       importmap = { imports: {} },
       baseURL,
+      fetch,
       reload,
       progressCallback,
     } = options ?? {};
@@ -35,36 +38,39 @@ export const remoteLoader = (
 
     onResolve(
       { filter: /.*/ },
-      ({ path, importer }) => {
+      async ({ path, importer }) => {
         if (skip(path)) return { external: true };
         const resolvedPath = importMap.imports?.[path] ?? path;
 
         if (resolvedPath.startsWith("http")) {
-          if (skip(resolvedPath)) {
-            console.log(`skip ${resolvedPath}`);
+          const url = await proxy(new URL(resolvedPath));
+          if (skip(url.toString())) {
+            console.log(`skip ${url}`);
             return {
               external: true,
-              path: relative(baseURL, new URL(resolvedPath)),
+              path: relative(baseURL, url),
             };
           }
           return {
-            path: decodeURI(resolvedPath),
+            path: decodeURI(url.toString()),
             namespace: name,
           };
         }
+
         importer = importer === "<stdin>" ? baseURL.toString() : importer;
         const importURL = new URL(resolvedPath, importer).toString();
         const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
         if (resolvedPath2.startsWith("http")) {
-          if (skip(resolvedPath2)) {
-            console.log(`skip ${resolvedPath2}`);
+          const url = await proxy(new URL(resolvedPath2));
+          if (skip(url.toString())) {
+            console.log(`skip ${url}`);
             return {
               external: true,
-              path: relative(baseURL, new URL(resolvedPath2)),
+              path: relative(baseURL, url),
             };
           }
           return {
-            path: decodeURI(resolvedPath2),
+            path: decodeURI(url.toString()),
             namespace: name,
           };
         }

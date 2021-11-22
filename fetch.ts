@@ -1,16 +1,15 @@
 /// <reference no-default-lib="true" />
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-import { proxy as switcher } from "./proxy.ts";
 
 let cache: Cache | undefined;
 
+export type CustomFetch = typeof fetch;
 export async function fetch(
   path: URL | string,
   reload = false,
-  proxy = switcher,
 ) {
-  const url = await proxy(new URL(path));
+  const url = new URL(path);
   cache ??= await globalThis.caches.open("v1");
   if (reload) {
     return await fetchNetworkFirst(url);
