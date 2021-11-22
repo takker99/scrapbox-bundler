@@ -42,6 +42,11 @@ async function resolve(
     throw { status: res.status, statusText: res.statusText };
   }
   const { latest } = (await res.json()) as Versions;
+  console.info(
+    `use ${
+      type === "x" ? `x/${name}@${latest}` : `std@${latest}/${name}`
+    } as the latest version of ${type}/${name}`,
+  );
   return await resolve(type, name, latest, file);
 }
 
