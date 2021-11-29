@@ -19,22 +19,22 @@ self.addEventListener<"message">("message", async (event) => {
   });
   try {
     await initialized;
-    const { entryURL, reload, importmap, ...options } =
+    const { entryURL, reload, importMapURL, ...options } =
       (event.data) as BundleOptions;
-    const baseURL = await proxy(new URL(entryURL));
-    const entryPointRes = await fetch(baseURL, reload);
+    const convertedEntryURL = await proxy(new URL(entryURL));
+    const entryPointRes = await fetch(convertedEntryURL, reload);
     postMessage({ type: entryPointRes.type, url: entryPointRes.response.url });
     const loader = getLoader(entryPointRes.response);
 
-    let importMap: ImportMap | undefined = undefined;
-    if (importmap) {
-      const url = await proxy(new URL(importmap, entryURL));
+    let importmap: ImportMap | undefined = undefined;
+    if (importMapURL) {
+      const url = await proxy(new URL(importMapURL, entryURL));
       const { type, json } = await fetchImportMap(
         url,
         reload,
       );
       postMessage({ type, url: url.toString() });
-      importMap = json;
+      importmap = json;
     }
 
     const result = await build({
@@ -46,10 +46,10 @@ self.addEventListener<"message">("message", async (event) => {
       ...options,
       plugins: [
         remoteLoader({
-          baseURL,
+          baseURL: convertedEntryURL,
           reload,
           fetch,
-          importmap: importMap,
+          importmap,
           progressCallback: postMessage,
         }),
       ],

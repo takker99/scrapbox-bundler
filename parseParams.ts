@@ -32,6 +32,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     jsxFragment,
     reload,
     sourcemap,
-    importmap: importMapURL,
+    importMapURL,
   };
 }
