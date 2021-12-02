@@ -4,7 +4,7 @@
 import { getPromiseSettledAnytimes } from "./utils.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
 
-const worker = new Worker("./assets/worker.js");
+const worker = new Worker("./worker.js");
 
 export async function* build(params: BundleOptions) {
   const [waitMessage, resolve, reject] = getPromiseSettledAnytimes<
