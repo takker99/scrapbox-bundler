@@ -29,5 +29,6 @@ export async function* build(params: BundleOptions) {
     }
   } finally {
     worker.removeEventListener("message", callback);
+    worker.removeEventListener("messageerror", onMessageError);
   }
 }
