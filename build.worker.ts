@@ -5,7 +5,7 @@ import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
 import { remoteLoader } from "./plugin.ts";
 import { getLoader } from "././loader.ts";
 import { fetch } from "./fetch.ts";
-import { proxy } from "./proxy.ts";
+import { redirect } from "./redirect.ts";
 import { fetchImportMap, ImportMap } from "./importmap.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";
 
@@ -21,14 +21,14 @@ self.addEventListener<"message">("message", async (event) => {
     await initialized;
     const { entryURL, reload, importMapURL, ...options } =
       (event.data) as BundleOptions;
-    const convertedEntryURL = await proxy(new URL(entryURL));
+    const convertedEntryURL = await redirect(new URL(entryURL));
     const entryPointRes = await fetch(convertedEntryURL, reload);
     postMessage({ type: entryPointRes.type, url: entryPointRes.response.url });
     const loader = getLoader(entryPointRes.response);
 
     let importmap: ImportMap | undefined = undefined;
     if (importMapURL) {
-      const url = await proxy(new URL(importMapURL, entryURL));
+      const url = await redirect(new URL(importMapURL, entryURL));
       const { type, json } = await fetchImportMap(
         url,
         reload,
@@ -46,7 +46,7 @@ self.addEventListener<"message">("message", async (event) => {
       ...options,
       plugins: [
         remoteLoader({
-          baseURL: convertedEntryURL,
+          baseURL: new URL(entryURL),
           reload,
           fetch,
           importmap,

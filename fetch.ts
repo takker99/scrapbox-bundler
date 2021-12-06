@@ -23,7 +23,7 @@ export async function fetch(
 async function fetchNetworkFirst(url: URL | string) {
   cache ??= await globalThis.caches.open("v1");
   try {
-    const res = await globalThis.fetch(url.toString());
+    const res = await globalThis.fetch(proxy(url).toString());
     if (!res.ok) throw res;
     cache.put(url.toString(), res.clone());
     return { type: "remote", response: res } as const;
@@ -32,4 +32,12 @@ async function fetchNetworkFirst(url: URL | string) {
     if (!res) throw e;
     return { type: "cache", response: res } as const;
   }
+}
+
+function proxy(url: URL | string) {
+  const newURL = new URL(url.toString());
+  newURL.port = "";
+  newURL.protocol = "https:";
+  newURL.hostname = "scrapbox-proxy-server.vercel.app";
+  return newURL;
 }

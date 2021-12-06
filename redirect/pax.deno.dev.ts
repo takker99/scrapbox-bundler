@@ -12,7 +12,7 @@ function extract(path: string) {
   ];
 }
 
-export function proxy(pathname: string): URL {
+export function redirect(pathname: string): URL {
   const [owner, repo, tag, file] = extract(pathname);
 
   if (!owner || !repo) {

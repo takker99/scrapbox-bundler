@@ -7,7 +7,7 @@ import { ImportMap, resolveImportMap } from "./deps/importmap.ts";
 import type { CustomFetch } from "./fetch.ts";
 import { relative } from "./path.ts";
 import { getLoader } from "./loader.ts";
-import { proxy } from "./proxy.ts";
+import { redirect } from "./redirect.ts";
 
 export interface Options {
   importmap?: ImportMap;
@@ -43,7 +43,7 @@ export const remoteLoader = (
         const resolvedPath = importMap.imports?.[path] ?? path;
 
         if (resolvedPath.startsWith("http")) {
-          const url = await proxy(new URL(resolvedPath));
+          const url = await redirect(new URL(resolvedPath));
           if (skip(url.toString())) {
             console.log(`skip ${url}`);
             return {
@@ -61,7 +61,7 @@ export const remoteLoader = (
         const importURL = new URL(resolvedPath, importer).toString();
         const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
         if (resolvedPath2.startsWith("http")) {
-          const url = await proxy(new URL(resolvedPath2));
+          const url = await redirect(new URL(resolvedPath2));
           if (skip(url.toString())) {
             console.log(`skip ${url}`);
             return {
@@ -82,7 +82,7 @@ export const remoteLoader = (
         const { type, response } = await fetch(path, reload);
         progressCallback?.({
           type,
-          url: response.url,
+          url: path,
         });
         return { contents: await response.text(), loader: getLoader(response) };
       } catch (e) {
@@ -91,7 +91,7 @@ export const remoteLoader = (
         }
         progressCallback?.({
           type: "fetch error",
-          url: e.url,
+          url: path,
           data: { status: e.status, statusText: e.statusText },
         });
         return;
