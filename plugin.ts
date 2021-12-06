@@ -61,7 +61,7 @@ export const remoteLoader = (
         const importURL = new URL(resolvedPath, importer).toString();
         const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
         if (resolvedPath2.startsWith("http")) {
-          const url = await proxy(new URL(resolvedPath2));
+          const url = await redirect(new URL(resolvedPath2));
           if (skip(url.toString())) {
             console.log(`skip ${url}`);
             return {
