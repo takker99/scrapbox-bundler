@@ -15,3 +15,7 @@ export function getPromiseSettledAnytimes<T, E = unknown>() {
 
   return [waitForSettled, resolve, reject] as const;
 }
+
+export function isBareModuleName(name: string) {
+  return !/^(?:https?|file):\/\/|^\.{0,2}\//.test(name);
+}
