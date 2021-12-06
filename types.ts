@@ -24,6 +24,7 @@ export type SkipInfo = {
 };
 export type BuiltInfo = {
   type: "built";
+  extension: "js" | "css" | "txt";
   code: Uint8Array;
 };
 export type BuildErrorInfo = {

@@ -2,6 +2,7 @@ import { BundleOptions, isFormat } from "./types.ts";
 
 export type ParamOptions = BundleOptions & {
   run: boolean;
+  output: "self" | "newtab" | "download";
 };
 
 export function parseSearchParams(searchParam: string): ParamOptions {
@@ -12,6 +13,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const format = params.get("format") ?? "esm";
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
   const run = params.get("run") === null ? false : true;
+  const output = params.get("output") ?? "self";
   const jsxFactory = params.get("jsxFactory") ?? "h";
   const jsxFragment = params.get("jsxFragment") ?? "Fragment";
   const entryURL = params.get("url") ?? "";
@@ -28,10 +30,15 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     entryURL,
     external,
     run,
+    output: isOutput(output) ? output : "self",
     jsxFactory,
     jsxFragment,
     reload,
     sourcemap,
     importMapURL,
   };
+}
+
+function isOutput(output: string): output is "self" | "newtab" | "download" {
+  return ["self", "newtab", "download"].includes(output);
 }

@@ -54,8 +54,25 @@ self.addEventListener<"message">("message", async (event) => {
         }),
       ],
     });
+
+    let extension: "js" | "css" | "txt";
+    switch (loader) {
+      case "js":
+      case "jsx":
+      case "ts":
+      case "tsx":
+        extension = "js";
+        break;
+      case "css":
+        extension = "css";
+        break;
+      default:
+        extension = "txt";
+        break;
+    }
     postMessage({
       type: "built",
+      extension,
       code: result.outputFiles[0].contents,
     });
   } catch (e) {
