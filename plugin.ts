@@ -2,19 +2,24 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import type { Plugin } from "./deps/esbuild-wasm.ts";
-import type { ImportInfo } from "./types.ts";
-import { ImportMap, resolveImportMap } from "./deps/importmap.ts";
+import type { ImportInfo, SkipInfo } from "./types.ts";
+import {
+  ImportMap,
+  resolveImportMap,
+  resolveModuleSpecifier,
+} from "./deps/importmap.ts";
 import type { CustomFetch } from "./fetch.ts";
 import { relative } from "./path.ts";
 import { getLoader } from "./loader.ts";
 import { redirect } from "./redirect.ts";
+import { isBareModuleName } from "./utils.ts";
 
 export interface Options {
   importmap?: ImportMap;
   baseURL: URL;
   fetch: CustomFetch;
   reload: boolean;
-  progressCallback?: (message: ImportInfo) => void;
+  progressCallback?: (message: ImportInfo | SkipInfo) => void;
 }
 
 const name = "remote-resource";
@@ -30,54 +35,48 @@ export const remoteLoader = (
       reload,
       progressCallback,
     } = options ?? {};
-    const importMap = resolveImportMap(importmap, baseURL);
-    external = external.map((path) => new URL(path, baseURL).href);
-    console.log(external);
 
-    const skip = (path: string) => external.includes(path);
+    const importMap = resolveImportMap(importmap, baseURL);
+    external = external.map((path) =>
+      isBareModuleName(path) ? path : new URL(path, baseURL).href
+    );
 
     onResolve(
       { filter: /.*/ },
       async ({ path, importer }) => {
-        if (skip(path)) return { external: true };
-        const resolvedPath = importMap.imports?.[path] ?? path;
+        if (!isBareModuleName(path)) {
+          importer = importer === "<stdin>" ? baseURL.href : importer;
+          path = new URL(path, importer).href;
+        }
+        const resolvedPath = resolveModuleSpecifier(path, importMap, baseURL);
 
-        if (resolvedPath.startsWith("http")) {
-          const url = await redirect(new URL(resolvedPath));
-          if (skip(url.toString())) {
-            console.log(`skip ${url}`);
-            return {
-              external: true,
-              path: relative(baseURL, url),
-            };
-          }
+        if (isBareModuleName(resolvedPath)) {
+          progressCallback?.({
+            type: "skip",
+            url: resolvedPath,
+          });
+          return { external: true, path: resolvedPath };
+        }
+
+        if (external.includes(resolvedPath)) {
+          progressCallback?.({
+            type: "skip",
+            url: resolvedPath,
+          });
           return {
-            path: decodeURI(url.toString()),
-            namespace: name,
+            external: true,
+            path: relative(baseURL, new URL(resolvedPath)),
           };
         }
 
-        importer = importer === "<stdin>" ? baseURL.toString() : importer;
-        const importURL = new URL(resolvedPath, importer).toString();
-        const resolvedPath2 = importMap.imports?.[importURL] ?? importURL;
-        if (resolvedPath2.startsWith("http")) {
-          const url = await redirect(new URL(resolvedPath2));
-          if (skip(url.toString())) {
-            console.log(`skip ${url}`);
-            return {
-              external: true,
-              path: relative(baseURL, url),
-            };
-          }
-          return {
-            path: decodeURI(url.toString()),
-            namespace: name,
-          };
-        }
-        return { external: true };
+        const url = await redirect(new URL(resolvedPath));
+        return {
+          path: decodeURI(url.href),
+          namespace: name,
+        };
       },
     );
-    onLoad({ filter: /^http/, namespace: name }, async ({ path }) => {
+    onLoad({ filter: /^http|^file/, namespace: name }, async ({ path }) => {
       try {
         const { type, response } = await fetch(path, reload);
         progressCallback?.({

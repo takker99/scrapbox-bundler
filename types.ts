@@ -18,6 +18,10 @@ export type CacheInfo = {
 };
 export type ImportInfo = RemoteInfo | CacheInfo | FetchErrorInfo;
 
+export type SkipInfo = {
+  type: "skip";
+  url: string;
+};
 export type BuiltInfo = {
   type: "built";
   code: Uint8Array;
@@ -32,6 +36,7 @@ export type UnexpectedErrorInfo = {
 };
 export type BuildResult =
   | ImportInfo
+  | SkipInfo
   | BuiltInfo
   | BuildErrorInfo
   | UnexpectedErrorInfo;
