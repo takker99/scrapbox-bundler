@@ -3,8 +3,9 @@
 /// <reference lib="webworker" />
 import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
 import { remoteLoader } from "./plugin.ts";
-import { getLoader } from "././loader.ts";
-import { fetch } from "./fetch.ts";
+import { getLoader } from "./loader.ts";
+// @deno-types=./fetch.worker.ts
+import { fetch } from "./fetch.js";
 import { redirect } from "./redirect.ts";
 import { fetchImportMap, ImportMap } from "./importmap.ts";
 import type { BuildResult, BundleOptions } from "./types.ts";

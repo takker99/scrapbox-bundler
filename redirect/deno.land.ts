@@ -1,4 +1,5 @@
-import { fetch } from "../fetch.ts";
+// @deno-types=../fetch.worker.ts
+import { fetch } from "../fetch.js";
 
 const hostname = "deno.land";
 export interface RedirectOption {
