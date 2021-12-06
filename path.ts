@@ -1,6 +1,4 @@
 // Modified https://deno.land/std@0.114.0/path/posix.ts in order to use web browsers
-//
-const CHAR_FORWARD_SLASH = 47;
 
 /**
  * Return the relative path from `from` to `to`
