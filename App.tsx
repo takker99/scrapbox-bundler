@@ -100,6 +100,9 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
             case "cache":
               setLog((old) => `${old}\nUse cache: ${decodeURI(data.url)}`);
               break;
+            case "skip":
+              setLog((old) => `${old}\nPreserve ${decodeURI(data.url)}`);
+              break;
             case "fetch error":
               setLog((old) =>
                 `${old}\nNetwork Error: ${data.data.status} ${data.data.statusText}\n\tat ${
