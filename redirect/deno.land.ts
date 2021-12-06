@@ -1,5 +1,13 @@
+import { fetch } from "../fetch.ts";
+
 const hostname = "deno.land";
-export async function proxy(pathname: string): Promise<URL> {
+export interface RedirectOption {
+  reload: boolean;
+}
+export async function redirect(
+  pathname: string,
+  option?: RedirectOption,
+): Promise<URL> {
   {
     const match = pathname.match(
       /^\/x\/([^\/@]+)(@[^\/]+)?(\/.*)?/,
@@ -8,7 +16,13 @@ export async function proxy(pathname: string): Promise<URL> {
       const name = match[1];
       const version = match[2]?.slice?.(1);
       const file = match[3] ?? "";
-      return await resolve("x", name, version, file);
+      return await resolve(
+        "x",
+        name,
+        version,
+        file,
+        option ?? { reload: false },
+      );
     }
   }
   const match = pathname.match(
@@ -18,7 +32,7 @@ export async function proxy(pathname: string): Promise<URL> {
   const name = match[2];
   const version = match[1]?.slice?.(1);
   const file = match[3] ?? "";
-  return await resolve("std", name, version, file);
+  return await resolve("std", name, version, file, option ?? { reload: false });
 }
 
 async function resolve(
@@ -26,6 +40,7 @@ async function resolve(
   name: string,
   version: string | undefined,
   file: string,
+  { reload }: RedirectOption,
 ): Promise<URL> {
   if (version !== undefined) {
     return new URL(
@@ -35,19 +50,20 @@ async function resolve(
     );
   }
 
-  const res = await fetch(
+  const { response } = await fetch(
     `https://cdn.deno.land/${type === "x" ? name : "std"}/meta/versions.json`,
+    reload,
   );
-  if (!res.ok) {
-    throw { status: res.status, statusText: res.statusText };
+  if (!response.ok) {
+    throw { status: response.status, statusText: response.statusText };
   }
-  const { latest } = (await res.json()) as Versions;
+  const { latest } = (await response.json()) as Versions;
   console.info(
     `use ${
       type === "x" ? `x/${name}@${latest}` : `std@${latest}/${name}`
     } as the latest version of ${type}/${name}`,
   );
-  return await resolve(type, name, latest, file);
+  return await resolve(type, name, latest, file, { reload });
 }
 
 interface Versions {
