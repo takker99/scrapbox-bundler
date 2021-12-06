@@ -8,7 +8,8 @@ import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import type { BundleOptions, ErrorInfo, UnexpectedErrorInfo } from "./types.ts";
 
-const { run, ...initialOptions } = parseSearchParams(location.search);
+const { run, output, ...initialOptions } = parseSearchParams(location.search);
+type HeadlessAppProps = { options: BundleOptions; output: typeof output };
 
 const App = () => {
   return (
@@ -75,22 +76,46 @@ const App = () => {
   );
 };
 
-const HeadlessApp = (props: { options: BundleOptions }) => {
+const HeadlessApp = ({ options, output }: HeadlessAppProps) => {
   const [log, setLog] = useState<string>("");
   useEffect(() => {
     (async () => {
       console.group("build log");
       try {
-        for await (const data of build(props.options)) {
+        for await (const data of build(options)) {
           console.log(data);
           switch (data.type) {
             case "built": {
               setLog((old) => `${old}\nFinish building.`);
               const blob = new Blob([data.code], {
-                type: "application/javascript;charset=UTF-8",
+                type: `${
+                  data.extension === "js"
+                    ? "application/javascript"
+                    : data.extension === "css"
+                    ? "text/css"
+                    : "text/plain"
+                };charset=UTF-8`,
               });
               const url = URL.createObjectURL(blob);
-              window.open(url, "_self");
+              switch (output) {
+                case "newtab":
+                case "self": {
+                  window.open(
+                    url,
+                    output === "self" ? "_self" : undefined,
+                  );
+                  break;
+                }
+                case "download": {
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `index.${data.extension}`;
+                  a.style.display = "none";
+                  a.click();
+                  a.remove();
+                  break;
+                }
+              }
               URL.revokeObjectURL(url);
               break;
             }
@@ -161,6 +186,6 @@ const HeadlessApp = (props: { options: BundleOptions }) => {
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");
 render(
-  run ? <HeadlessApp options={initialOptions} /> : <App />,
+  run ? <HeadlessApp options={initialOptions} output={output} /> : <App />,
   app,
 );
