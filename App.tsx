@@ -115,7 +115,9 @@ const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
                 case "download": {
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = `index.${data.extension}`;
+                  a.download = templateURL
+                    ? "import.json"
+                    : `index.${data.extension}`;
                   a.style.display = "none";
                   a.click();
                   a.remove();
