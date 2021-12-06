@@ -3,6 +3,7 @@ import { BundleOptions, isFormat } from "./types.ts";
 export type ParamOptions = BundleOptions & {
   run: boolean;
   output: "self" | "newtab" | "download";
+  templateURL?: string;
 };
 
 export function parseSearchParams(searchParam: string): ParamOptions {
@@ -21,6 +22,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const sourcemap = params.get("sourcemap") === null ? false : "inline";
   const external = params.getAll("external");
   const importMapURL = params.get("importmap") ?? undefined;
+  const templateURL = params.get("template") ?? undefined;
 
   return {
     bundle,
@@ -36,6 +38,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     reload,
     sourcemap,
     importMapURL,
+    templateURL,
   };
 }
 

@@ -6,10 +6,18 @@
 import { Fragment, h, render, useEffect, useState } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
-import type { BundleOptions, ErrorInfo, UnexpectedErrorInfo } from "./types.ts";
+import type { BundleOptions, UnexpectedErrorInfo } from "./types.ts";
+// @deno-types=./fetch.ui.ts
+import { fetch } from "./fetch.js";
 
-const { run, output, ...initialOptions } = parseSearchParams(location.search);
-type HeadlessAppProps = { options: BundleOptions; output: typeof output };
+const { run, output, templateURL, ...initialOptions } = parseSearchParams(
+  location.search,
+);
+type HeadlessAppProps = {
+  options: BundleOptions;
+  output: typeof output;
+  templateURL?: string;
+};
 
 const App = () => {
   return (
@@ -76,7 +84,7 @@ const App = () => {
   );
 };
 
-const HeadlessApp = ({ options, output }: HeadlessAppProps) => {
+const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
   const [log, setLog] = useState<string>("");
   useEffect(() => {
     (async () => {
@@ -87,16 +95,14 @@ const HeadlessApp = ({ options, output }: HeadlessAppProps) => {
           switch (data.type) {
             case "built": {
               setLog((old) => `${old}\nFinish building.`);
-              const blob = new Blob([data.code], {
-                type: `${
-                  data.extension === "js"
-                    ? "application/javascript"
-                    : data.extension === "css"
-                    ? "text/css"
-                    : "text/plain"
-                };charset=UTF-8`,
-              });
-              const url = URL.createObjectURL(blob);
+              const url = URL.createObjectURL(
+                await makeBlob(
+                  data.code,
+                  data.extension,
+                  decodeURI(location.href),
+                  templateURL,
+                ),
+              );
               switch (output) {
                 case "newtab":
                 case "self": {
@@ -183,9 +189,67 @@ const HeadlessApp = ({ options, output }: HeadlessAppProps) => {
   );
 };
 
+async function makeBlob(
+  code: Uint8Array,
+  extension: string,
+  entryPointURL: string,
+  templateURL?: string,
+) {
+  if (!templateURL) {
+    const blob = new Blob([code], {
+      type: `${
+        extension === "js"
+          ? "application/javascript"
+          : extension === "css"
+          ? "text/css"
+          : "text/plain"
+      };charset=UTF-8`,
+    });
+    return blob;
+  }
+  const { response: res } = await fetch(templateURL);
+  const template = await res.text();
+  const sourceCode = new TextDecoder("utf-8").decode(code);
+  const lines = template.replaceAll("@URL@", entryPointURL).split("\n").flatMap(
+    (line) => {
+      const text = line.replace(
+        /^(\s*)@CODE@/,
+        (_, space) =>
+          sourceCode.split(/\n/).map((line) => `${space}${line}`).join("\n"),
+      );
+      return text.split("\n");
+    },
+  );
+  const now = new Date().getTime() / 1000;
+  const json = {
+    pages: [{
+      title: lines[0],
+      created: now,
+      updated: now,
+      lines: lines.map((line) => ({
+        text: line,
+        created: now,
+        updated: now,
+      })),
+    }],
+  };
+
+  return new Blob([JSON.stringify(json)], {
+    type: "application/json;charset=UTF-8",
+  });
+}
+
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");
 render(
-  run ? <HeadlessApp options={initialOptions} output={output} /> : <App />,
+  run
+    ? (
+      <HeadlessApp
+        options={initialOptions}
+        output={output}
+        templateURL={templateURL}
+      />
+    )
+    : <App />,
   app,
 );
