@@ -22,9 +22,9 @@ self.addEventListener<"message">("message", async (event) => {
     const { entryURL, reload, importMapURL, ...options } =
       (event.data) as BundleOptions;
     const baseURL = await redirect(new URL(entryURL));
-    const entryPointRes = await fetch(baseURL, reload);
-    postMessage({ type: entryPointRes.type, url: baseURL.href });
-    const loader = getLoader(entryPointRes.response);
+    const { type, response } = await fetch(baseURL, reload);
+    postMessage({ type, url: baseURL.href });
+    const loader = getLoader(response);
 
     let importmap: ImportMap | undefined = undefined;
     if (importMapURL) {
@@ -39,7 +39,7 @@ self.addEventListener<"message">("message", async (event) => {
 
     const result = await build({
       stdin: {
-        contents: await entryPointRes.response.text(),
+        contents: await response.text(),
         loader,
       },
       write: false,
