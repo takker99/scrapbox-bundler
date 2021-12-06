@@ -23,7 +23,9 @@ export async function fetch(
 async function fetchNetworkFirst(url: URL | string) {
   cache ??= await globalThis.caches.open("v1");
   try {
-    const res = await globalThis.fetch(proxy(url).toString());
+    const res = await globalThis.fetch(
+      proxy(new URL(url.toString())).href,
+    );
     if (!res.ok) throw res;
     cache.put(url.toString(), res.clone());
     return { type: "remote", response: res } as const;
@@ -34,7 +36,8 @@ async function fetchNetworkFirst(url: URL | string) {
   }
 }
 
-function proxy(url: URL | string) {
+function proxy(url: URL) {
+  if (url.hostname !== "scrapbox.io") return url;
   const newURL = new URL(url.toString());
   newURL.port = "";
   newURL.protocol = "https:";
