@@ -14,3 +14,4 @@ export declare function fetch(
     response: Response;
   }
 >;
+export type CustomFetch = typeof fetch;

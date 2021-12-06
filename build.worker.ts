@@ -3,7 +3,7 @@
 /// <reference lib="webworker" />
 import { build, BuildFailure, initialize } from "./deps/esbuild-wasm.ts";
 import { remoteLoader } from "./plugin.ts";
-import { getLoader } from "././loader.ts";
+import { getLoader } from "./loader.ts";
 // @deno-types=./fetch.worker.ts
 import { fetch } from "./fetch.js";
 import { redirect } from "./redirect.ts";

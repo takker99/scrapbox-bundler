@@ -8,7 +8,7 @@ import {
   resolveImportMap,
   resolveModuleSpecifier,
 } from "./deps/importmap.ts";
-import type { CustomFetch } from "./fetch.ts";
+import type { CustomFetch } from "./fetch.worker.ts";
 import { relative } from "./path.ts";
 import { getLoader } from "./loader.ts";
 import { redirect } from "./redirect.ts";

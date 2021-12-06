@@ -1,4 +1,5 @@
-import { fetch } from "./fetch.ts";
+// @deno-types=./fetch.worker.ts
+import { fetch } from "./fetch.js";
 import type { ImportMap } from "./deps/importmap.ts";
 export type { ImportMap };
 
