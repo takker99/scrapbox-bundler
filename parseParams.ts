@@ -12,6 +12,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const bundle = params.get("bundle") === null ? false : true;
   const minify = params.get("minify") === null ? false : true;
   const format = params.get("format") ?? "esm";
+  const define = parseDefine(params.getAll("define"));
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
   const run = params.get("run") === null ? false : true;
   const output = params.get("output") ?? "self";
@@ -31,6 +32,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     charset,
     entryURL,
     external,
+    define,
     run,
     output: isOutput(output) ? output : "self",
     jsxFactory,
@@ -44,4 +46,14 @@ export function parseSearchParams(searchParam: string): ParamOptions {
 
 function isOutput(output: string): output is "self" | "newtab" | "download" {
   return ["self", "newtab", "download"].includes(output);
+}
+export function parseDefine(define: string[]) {
+  const defines = {} as Record<string, string>;
+  for (const pair of define) {
+    if (!pair.includes(":")) continue;
+    // the same keys are overwritten
+    const [key, value] = pair.split(":");
+    defines[key] = value;
+  }
+  return defines;
 }
