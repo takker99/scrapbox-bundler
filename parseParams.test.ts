@@ -12,16 +12,26 @@ Deno.test("parseDefine", () => {
     parseDefine([
       "magic_number:3443",
       "AUTH_TOKEN:ser43e8fh",
+      "URL:https://example.com",
     ]),
-    { magic_number: "3443", AUTH_TOKEN: "ser43e8fh" },
+    {
+      magic_number: "3443",
+      AUTH_TOKEN: "ser43e8fh",
+      URL: "https://example.com",
+    },
   );
   assertEquals(
     parseDefine([
       "invalid string",
       "magic_number:3443",
       "AUTH_TOKEN:ser43e8fh",
+      "URL:https://example.com",
     ]),
-    { magic_number: "3443", AUTH_TOKEN: "ser43e8fh" },
+    {
+      magic_number: "3443",
+      AUTH_TOKEN: "ser43e8fh",
+      URL: "https://example.com",
+    },
   );
 });
 Deno.test("parseDefine: the same keys are overwritten", () => {

@@ -50,9 +50,11 @@ function isOutput(output: string): output is "self" | "newtab" | "download" {
 export function parseDefine(define: string[]) {
   const defines = {} as Record<string, string>;
   for (const pair of define) {
-    if (!pair.includes(":")) continue;
+    const pos = pair.indexOf(":");
+    if (pos < 0) continue;
     // the same keys are overwritten
-    const [key, value] = pair.split(":");
+    const key = pair.slice(0, pos);
+    const value = pair.slice(pos + 1);
     defines[key] = value;
   }
   return defines;
