@@ -55,6 +55,7 @@ export type BundleOptions = {
   format: Format;
   entryURL: string;
   external: string[];
+  define: Record<string, string>;
   jsxFactory: string;
   jsxFragment: string;
   reload: boolean;
