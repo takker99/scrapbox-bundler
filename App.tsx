@@ -152,18 +152,14 @@ const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
                   ) =>
                     `[${
                       pluginName || "esbuild"
-                    }]Build error: ${text} \n\tat ${location
-                      ?.file}\n\t${location
-                      ?.lineText}\n\t${location?.suggestion}`
+                    }]Build error: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
                   ),
                   ...data.data.warnings.map((
                     { location, pluginName, text },
                   ) =>
                     `[${
                       pluginName || "esbuild"
-                    }]Build warning: ${text} \n\tat ${location
-                      ?.file}\n\t${location
-                      ?.lineText}\n\t${location?.suggestion}`
+                    }]Build warning: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
                   ),
                 ].join("\n")
               );
