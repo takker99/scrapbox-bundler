@@ -18,10 +18,7 @@ export function relative(from: URL, to: URL): string {
   const toSegments = to.pathname.split("/");
   let commonLength = 1;
   const minLength = Math.min(fromSegments.length, toSegments.length);
-  for (
-    ;
-    commonLength < minLength;
-  ) {
+  while (commonLength < minLength) {
     if (fromSegments[commonLength] !== toSegments[commonLength]) {
       break;
     }
