@@ -1,0 +1,6 @@
+{
+  "functions": {
+    "api/index.ts": { "runtime": "vercel-deno@1.1.1" }
+  },
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }]
+}

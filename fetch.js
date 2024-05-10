@@ -31,11 +31,10 @@ async function fetchNetworkFirst(url) {
     };
   }
 }
-function proxy(url) {
-  if (url.hostname !== "scrapbox.io") return url;
-  const newURL = new URL(url.toString());
-  newURL.port = "";
-  newURL.protocol = "https:";
-  newURL.hostname = "scrapbox-proxy-server.vercel.app";
-  return newURL;
-}
+/**
+ * @param {URL} url
+ * @return {URL}
+ */
+const proxy = (url) =>
+  url.hostname !== "scrapbox.io" ? url :
+    new URL(url.pathname, location);
