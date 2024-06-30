@@ -1,8 +1,9 @@
-export * from "https://esm.sh/preact@10.16.0";
+export * from "https://esm.sh/preact@10.22.0";
 export {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-} from "https://esm.sh/preact@10.16.0/hooks";
+} from "https://esm.sh/preact@10.22.0/hooks";

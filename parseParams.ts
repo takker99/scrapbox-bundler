@@ -1,10 +1,10 @@
 import { BundleOptions, isFormat } from "./types.ts";
 
-export type ParamOptions = BundleOptions & {
+export interface ParamOptions extends BundleOptions {
   run: boolean;
   output: "self" | "newtab" | "download";
   templateURL?: string;
-};
+}
 
 export function parseSearchParams(searchParam: string): ParamOptions {
   const param = searchParam === "" ? "" : searchParam.slice(1);
@@ -21,7 +21,10 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const entryURL = params.get("url") ?? "";
   const reload = params.get("reload") === null ? false : true;
   const sourcemap = params.get("sourcemap") === null ? false : "inline";
-  const external = params.getAll("external");
+  const external = params.getAll("external").map((url) =>
+    // necessary because esbuild treats external as encoded URL
+    encodeURI(url)
+  );
   const importMapURL = params.get("importmap") ?? undefined;
   const templateURL = params.get("template") ?? undefined;
 
@@ -39,7 +42,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     jsxFragment,
     reload,
     sourcemap,
-    importMapURL,
+    importMapURL: importMapURL ? new URL(importMapURL, entryURL) : undefined,
     templateURL,
   };
 }
