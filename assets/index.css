@@ -25,7 +25,6 @@ details {
 
     .tree-shaked {
         color: lightgray;
-        font-style: italic;
         text-decoration: line-through;
     }
 }
