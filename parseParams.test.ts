@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { parseDefine } from "./parseParams.ts";
 import { assertEquals } from "./deps/testing.ts";
 
