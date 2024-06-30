@@ -13,10 +13,34 @@
 }
 
 details {
+    summary {
+        display: block;
+    }
+
+    summary::-webkit-details-marker {
+        display: none;
+    }
+
+    summary::before {
+        display: inline-block;
+        content: "▶️";
+        width: 1em;
+        height: 1em;
+    }
+
+    &[open]>summary::before {
+        transform: rotate(90deg);
+    }
+
+
     ul {
         list-style-type: none;
         margin: unset;
         padding-inline-start: 1em;
+    }
+
+    li> :not(details) {
+        margin-left: 1em;
     }
 
     .viewed {
@@ -27,4 +51,5 @@ details {
         color: lightgray;
         text-decoration: line-through;
     }
+
 }
