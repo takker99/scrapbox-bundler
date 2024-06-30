@@ -151,10 +151,11 @@ const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
                 });
                 break;
               case "load":
-                message.done.then(({ size, isCache }) =>
+                message.done.then(({ size, isCache, loader }) =>
                   setPathMap((prev) => {
                     const path = prev.get(message.path) ?? {
                       ...message,
+                      loader,
                       external: false,
                       loaded: true,
                       byte: size,
@@ -162,8 +163,7 @@ const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
                       isCache,
                       children: [],
                     };
-                    path.loader = message.loader;
-                    path.loaded = true;
+                    path.loader = loader, path.loaded = true;
                     path.byte = size;
                     path.bytesInOutput = size;
                     path.isCache = isCache;
@@ -176,13 +176,11 @@ const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
           },
         });
         setPathMap((prev) => {
-          const inputs = result.metafile.inputs;
           const outputs = [...Object.values(result.metafile.outputs)].reduce(
             (input, cur) => ({ ...input, ...cur.inputs }),
             {} as Record<string, { bytesInOutput: number }>,
           );
           for (const [key, node] of prev) {
-            node.byte = inputs[key]?.bytes;
             node.bytesInOutput = outputs[key]?.bytesInOutput ?? 0;
           }
           return new Map(prev);
