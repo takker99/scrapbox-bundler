@@ -23,13 +23,13 @@ details {
 
     summary::before {
         display: inline-block;
-        content: "▶️";
+        content: "▶";
         width: 1em;
         height: 1em;
     }
 
     &[open]>summary::before {
-        transform: rotate(90deg);
+        content: "▼";
     }
 
 
