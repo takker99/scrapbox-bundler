@@ -66,7 +66,7 @@ export const DepNode: FunctionComponent<
     if (viewed) classList.push("viewed");
     return (
       <div className={classList.join(" ")} title={title}>
-        <NodeInfo {...node} />
+        <NodeInfo node={node} viewed={viewed} />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export const DepNode: FunctionComponent<
   return (
     <details open>
       <summary className={classList.join(" ")} title={title}>
-        <NodeInfo {...node} />
+        <NodeInfo node={node} viewed={viewed} />
       </summary>
       <ul>
         {node.children.map((child) => (
@@ -88,7 +88,9 @@ export const DepNode: FunctionComponent<
   );
 };
 
-const NodeInfo: FunctionComponent<DependencyNode> = (node) => (
+const NodeInfo: FunctionComponent<{ node: DependencyNode; viewed: boolean }> = (
+  { node, viewed },
+) => (
   <>
     <i
       className={`fas fa-${
@@ -108,6 +110,8 @@ const NodeInfo: FunctionComponent<DependencyNode> = (node) => (
         ? "use cache"
         : "download"}
     />{" "}
-    {`${node.path} (${format(node.byte)})`}
+    {`${decodeURIComponent(node.path)} ${
+      viewed ? "*" : `(${format(node.byte)})`
+    }`}
   </>
 );
