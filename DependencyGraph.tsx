@@ -62,8 +62,11 @@ export const DepNode: FunctionComponent<
   }
 
   const viewed = viewedPath.has(node.path);
+  if (viewed) {
+    classList.push("viewed");
+    title = "viewd more than once";
+  }
   if (viewed || node.children.length === 0) {
-    if (viewed) classList.push("viewed");
     return (
       <div className={classList.join(" ")} title={title}>
         <NodeInfo node={node} viewed={viewed} />
@@ -110,8 +113,10 @@ const NodeInfo: FunctionComponent<{ node: DependencyNode; viewed: boolean }> = (
         ? "use cache"
         : "download"}
     />{" "}
-    {`${decodeURIComponent(node.path)} ${
-      viewed ? "*" : `(${format(node.byte)})`
+    {`${decodeURIComponent(node.path)}${
+      node.external || !node.loaded
+        ? ""
+        : ` ${viewed ? "*" : `(${format(node.byte)})`}`
     }`}
   </>
 );
