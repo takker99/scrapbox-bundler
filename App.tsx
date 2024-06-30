@@ -3,16 +3,33 @@
 /// <reference lib="dom" />
 /** @jsx h */
 /** @jsxFrag Fragment */
-import { Fragment, h, render, useEffect, useState } from "./deps/preact.tsx";
+import {
+  Fragment,
+  h,
+  render,
+  useEffect,
+  useMemo,
+  useState,
+} from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
-import type { BundleOptions, UnexpectedErrorInfo } from "./types.ts";
-// @deno-types=./fetch.ui.ts
-import { fetch } from "./fetch.js";
+import { BundleOptions } from "./types.ts";
+import { loaderToMimeType } from "./loaderToMimeType.ts";
+import { DependencyGraph, DependencyNode } from "./DependencyGraph.tsx";
+import { initialize } from "./deps/esbuild-wasm.ts";
+import { fetch } from "./fetch.ts";
 
 const { run, output, templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
+
+await initialize({
+  workerURL: "./worker.js",
+  wasmModule: await WebAssembly.compileStreaming(
+    (await fetch(new Request("./esbuild.wasm"), !initialOptions.reload))[0],
+  ),
+});
+
 type HeadlessAppProps = {
   options: BundleOptions;
   output: typeof output;
@@ -85,129 +102,164 @@ const App = () => {
 };
 
 const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
-  const [log, setLog] = useState<string>("");
+  const [state, setState] = useState<"building" | "done" | "error">("building");
+  const [pathMap, setPathMap] = useState<Map<string, DependencyNode>>(
+    new Map(),
+  );
   useEffect(() => {
     (async () => {
-      console.group("build log");
+      let presentPathMap = pathMap;
+      const { entryURL, ...params } = options;
+      const entryPoints = [entryURL];
       try {
-        for await (const data of build(options)) {
-          console.log(data);
-          switch (data.type) {
-            case "built": {
-              setLog((old) => `${old}\nFinish building.`);
-              const url = URL.createObjectURL(
-                await makeBlob(
-                  data.code,
-                  data.extension,
-                  decodeURI(location.href),
-                  templateURL,
-                ),
-              );
-              switch (output) {
-                case "newtab":
-                case "self": {
-                  window.open(
-                    url,
-                    output === "self" ? "_self" : undefined,
-                  );
-                  break;
-                }
-                case "download": {
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = templateURL
-                    ? "import.json"
-                    : `index.${data.extension}`;
-                  a.style.display = "none";
-                  a.click();
-                  a.remove();
-                  break;
-                }
-              }
-              URL.revokeObjectURL(url);
-              break;
+        const result = await build({
+          entryPoints,
+          ...params,
+          progressCallback: (message) => {
+            switch (message.type) {
+              case "resolve":
+                setPathMap((prev) => {
+                  const node: DependencyNode = prev.get(message.path) ??
+                    {
+                      path: message.path,
+                      external: message.external,
+                      loader: "text",
+                      loaded: false,
+                      byte: 0,
+                      bytesInOutput: 0,
+                      isCache: false,
+                      children: [],
+                    };
+                  prev.set(message.path, node);
+                  if (message.parent) {
+                    node.firstParentPath ??= message.parent;
+                    const parent = prev.get(message.parent) ?? {
+                      path: message.parent,
+                      external: false,
+                      loader: "text",
+                      loaded: false,
+                      byte: 0,
+                      bytesInOutput: 0,
+                      isCache: false,
+                      children: [],
+                    };
+                    parent.children = [...parent.children, node];
+                    prev.set(message.parent, parent);
+                  }
+                  presentPathMap = new Map(prev);
+                  return presentPathMap;
+                });
+                break;
+              case "load":
+                message.done.then(({ size, isCache }) =>
+                  setPathMap((prev) => {
+                    const path = prev.get(message.path) ?? {
+                      ...message,
+                      external: false,
+                      loaded: true,
+                      byte: size,
+                      bytesInOutput: size,
+                      isCache,
+                      children: [],
+                    };
+                    path.loader = message.loader;
+                    path.loaded = true;
+                    path.byte = size;
+                    path.bytesInOutput = size;
+                    path.isCache = isCache;
+                    presentPathMap = new Map(prev);
+                    return presentPathMap;
+                  })
+                );
+                break;
             }
-            case "remote":
-              setLog((old) => `${old}\nDownload ${decodeURI(data.url)}`);
-              break;
-            case "cache":
-              setLog((old) => `${old}\nUse cache: ${decodeURI(data.url)}`);
-              break;
-            case "skip":
-              setLog((old) => `${old}\nPreserve ${decodeURI(data.url)}`);
-              break;
-            case "fetch error":
-              setLog((old) =>
-                `${old}\nNetwork Error: ${data.data.status} ${data.data.statusText}\n\tat ${
-                  decodeURI(data.url)
-                }: `
-              );
-              break;
-            case "build error":
-              setLog((old) =>
-                [
-                  old,
-                  ...data.data.errors.map((
-                    { location, pluginName, text },
-                  ) =>
-                    `[${
-                      pluginName || "esbuild"
-                    }]Build error: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
-                  ),
-                  ...data.data.warnings.map((
-                    { location, pluginName, text },
-                  ) =>
-                    `[${
-                      pluginName || "esbuild"
-                    }]Build warning: ${text} \n\tat ${location?.file}\n\t${location?.lineText}\n\t${location?.suggestion}`
-                  ),
-                ].join("\n")
-              );
-              break;
+          },
+        });
+        setPathMap((prev) => {
+          const inputs = result.metafile.inputs;
+          const outputs = [...Object.values(result.metafile.outputs)].reduce(
+            (input, cur) => ({ ...input, ...cur.inputs }),
+            {} as Record<string, { bytesInOutput: number }>,
+          );
+          for (const [key, node] of prev) {
+            node.byte = inputs[key]?.bytes;
+            node.bytesInOutput = outputs[key]?.bytesInOutput ?? 0;
+          }
+          return new Map(prev);
+        });
+        const file = result.outputFiles[0];
+        const loader = presentPathMap.get(file.path)?.loader ?? "text";
+        setState("done");
+        const url = loader === "dataurl" ? file.text : URL.createObjectURL(
+          await makeBlob(
+            file.contents,
+            loaderToMimeType(loader),
+            decodeURI(location.href),
+            templateURL,
+          ),
+        );
+        switch (output) {
+          case "newtab":
+          case "self": {
+            globalThis.open(
+              url,
+              output === "self" ? "_self" : undefined,
+            );
+            break;
+          }
+          case "download": {
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = templateURL ? "import.json" : `index.${loader}`;
+            a.style.display = "none";
+            a.click();
+            a.remove();
+            break;
           }
         }
+        if (loader !== "dataurl") URL.revokeObjectURL(url);
       } catch (e) {
-        if (e?.type !== "unexpected error") throw e;
-        const error = e as UnexpectedErrorInfo;
-        setLog((old) =>
-          `${old}\nUnexpected Error: ${JSON.stringify(error.data)}`
-        );
+        setState("error");
+        console.error(e);
       }
-      console.groupEnd();
     })();
   }, []);
 
+  const entryPoints = useMemo(
+    () =>
+      options.importMapURL
+        ? [options.entryURL, options.importMapURL.href]
+        : [options.entryURL],
+    [options.entryURL, options.importMapURL],
+  );
+
   return (
     <>
-      <p>Building...please wait.</p>
-      <pre>
-        <code>{log}</code>
-      </pre>
+      <p>
+        {state === "building"
+          ? "Building...please wait."
+          : state === "done"
+          ? "Finish building."
+          : "Failed to build."}
+      </p>
+      <DependencyGraph pathMap={pathMap} entryPoints={entryPoints} />
     </>
   );
 };
 
-async function makeBlob(
+const makeBlob = async (
   code: Uint8Array,
-  extension: string,
+  mimeType: string,
   entryPointURL: string,
   templateURL?: string,
-) {
+) => {
   if (!templateURL) {
-    const blob = new Blob([code], {
-      type: `${
-        extension === "js"
-          ? "application/javascript"
-          : extension === "css"
-          ? "text/css"
-          : "text/plain"
-      };charset=UTF-8`,
-    });
+    const blob = new Blob([code], { type: mimeType });
     return blob;
   }
-  const { response: res } = await fetch(templateURL);
+  const [res] = await fetch(new Request(templateURL), !initialOptions.reload);
   const template = await res.text();
-  const sourceCode = new TextDecoder("utf-8").decode(code);
+  const sourceCode = new TextDecoder().decode(code);
   const lines = template.replaceAll("@URL@", entryPointURL).split("\n").flatMap(
     (line) => {
       const text = line.replace(
@@ -235,7 +287,7 @@ async function makeBlob(
   return new Blob([JSON.stringify(json)], {
     type: "application/json;charset=UTF-8",
   });
-}
+};
 
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");

@@ -1,0 +1,31 @@
+.fa-spinner {
+    animation: spin 2s infinite linear
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg)
+    }
+
+    to {
+        transform: rotate(359deg)
+    }
+}
+
+details {
+    ul {
+        list-style-type: none;
+        margin: unset;
+        padding-inline-start: 1em;
+    }
+
+    .viewed {
+        color: gray;
+    }
+
+    .tree-shaked {
+        color: lightgray;
+        font-style: italic;
+        text-decoration: line-through;
+    }
+}

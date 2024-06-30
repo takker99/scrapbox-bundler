@@ -1,10 +1,10 @@
 import { BundleOptions, isFormat } from "./types.ts";
 
-export type ParamOptions = BundleOptions & {
+export interface ParamOptions extends BundleOptions {
   run: boolean;
   output: "self" | "newtab" | "download";
   templateURL?: string;
-};
+}
 
 export function parseSearchParams(searchParam: string): ParamOptions {
   const param = searchParam === "" ? "" : searchParam.slice(1);
@@ -39,7 +39,7 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     jsxFragment,
     reload,
     sourcemap,
-    importMapURL,
+    importMapURL: importMapURL ? new URL(importMapURL, entryURL) : undefined,
     templateURL,
   };
 }

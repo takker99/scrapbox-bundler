@@ -1,2 +1,1 @@
-// @deno-types=https://cdn.jsdelivr.net/npm/esbuild-wasm@0.13.11/esm/browser.d.ts
-export * from "https://cdn.jsdelivr.net/npm/esbuild-wasm@0.13.11/esm/browser.js";
+export * from "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.6.0/deps/esbuild-wasm.ts";

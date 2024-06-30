@@ -60,5 +60,5 @@ export type BundleOptions = {
   jsxFragment: string;
   reload: boolean;
   sourcemap: false | "inline";
-  importMapURL?: string;
+  importMapURL?: URL;
 };
