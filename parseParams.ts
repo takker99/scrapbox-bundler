@@ -1,7 +1,6 @@
 import { BundleOptions, isFormat } from "./types.ts";
 
 export interface ParamOptions extends BundleOptions {
-  run: boolean;
   output: "self" | "newtab" | "download";
   templateURL?: string;
 }
@@ -14,7 +13,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const format = params.get("format") ?? "esm";
   const define = parseDefine(params.getAll("define"));
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
-  const run = params.get("run") === null ? false : true;
   const output = params.get("output") ?? "self";
   const jsxFactory = params.get("jsxFactory") ?? "h";
   const jsxFragment = params.get("jsxFragment") ?? "Fragment";
@@ -36,7 +34,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     entryURL,
     external,
     define,
-    run,
     output: isOutput(output) ? output : "self",
     jsxFactory,
     jsxFragment,
