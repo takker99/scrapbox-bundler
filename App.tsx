@@ -5,6 +5,7 @@
 /** @jsxFrag Fragment */
 import {
   Fragment,
+  FunctionComponent,
   h,
   render,
   useEffect,
@@ -19,7 +20,7 @@ import { DependencyGraph, DependencyNode } from "./DependencyGraph.tsx";
 import { initialize } from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
 
-const { run, output, templateURL, ...initialOptions } = parseSearchParams(
+const { output, templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
 
@@ -30,78 +31,13 @@ await initialize({
   ),
 });
 
-type HeadlessAppProps = {
+interface AppProp {
   options: BundleOptions;
   output: typeof output;
   templateURL?: string;
-};
+}
 
-const App = () => {
-  return (
-    <>
-      <header>
-        <h1>Scrapbox Bundler</h1>
-      </header>
-      <section>
-        <h2>Options</h2>
-        <p>
-          target URL
-          <input type="text" name="target-url" pattern="^https?:\/\/" />
-        </p>
-        <p>
-          bundle
-          <input type="checkbox" name="bundle" value="true" checked />
-        </p>
-        <p>
-          minify
-          <input type="checkbox" name="minify" value="true" checked />
-        </p>
-        <p>
-          format
-          <input type="radio" name="format" value="esm" checked>
-            ES Module
-          </input>
-          <input type="radio" name="format" value="iife">
-            immediately-invoked function expression
-          </input>
-          <input type="radio" name="format" value="commonjs">CommonJS</input>
-        </p>
-        <p>
-          include source map
-          <input type="checkbox" name="source-map" value="true" />
-        </p>
-        <p>
-          <p>
-            URLs which are excluded from your build
-          </p>
-          <textarea />
-        </p>
-        <p>
-          <p>
-            import map
-          </p>
-          <textarea />
-        </p>
-      </section>
-      <section>
-        <h2>Advanced Options</h2>
-        <p>
-          escape non-ASCII characters
-          <input
-            type="checkbox"
-            name="charset"
-            value="utf8"
-            checked
-          />
-        </p>
-      </section>
-      <h2>Results</h2>
-      <div id="main"></div>
-    </>
-  );
-};
-
-const HeadlessApp = ({ options, output, templateURL }: HeadlessAppProps) => {
+const App: FunctionComponent<AppProp> = ({ options, output, templateURL }) => {
   const [state, setState] = useState<"building" | "done" | "error">("building");
   const [pathMap, setPathMap] = useState<Map<string, DependencyNode>>(
     new Map(),
@@ -290,14 +226,10 @@ const makeBlob = async (
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");
 render(
-  run
-    ? (
-      <HeadlessApp
-        options={initialOptions}
-        output={output}
-        templateURL={templateURL}
-      />
-    )
-    : <App />,
+  <App
+    options={initialOptions}
+    output={output}
+    templateURL={templateURL}
+  />,
   app,
 );
