@@ -11,7 +11,9 @@ export const fetch: RemoteLoaderInit["fetch"] = async (req, cacheFirst) => {
   try {
     const res = await globalThis.fetch(request);
     if (res.ok) {
-      await cache.put(request, res.clone());
+      if (/^https?$/.test(new URL(request.url).protocol)) {
+        await cache.put(request, res.clone());
+      }
       return [res, false];
     }
     throw new TypeError(`${res.status} ${res.statusText}`);

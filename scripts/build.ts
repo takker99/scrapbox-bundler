@@ -10,6 +10,9 @@ const result = await build({
   format: "esm",
   outdir: "assets",
   write: false,
+  banner: {
+    js: "// deno-lint-ignore-file\n// deno-fmt-ignore-file",
+  },
   plugins: [...denoPlugins()],
 });
 

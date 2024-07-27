@@ -14,11 +14,13 @@ import {
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import { BundleOptions } from "./types.ts";
-import { loaderToMimeType } from "./loaderToMimeType.ts";
 import { initialize, Loader } from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
+import { CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
+import { BuildResult } from "./BuildResult.tsx";
+import { applyTemplate } from "./applyTemplate.ts";
 
-const { output, templateURL, ...initialOptions } = parseSearchParams(
+const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
 
@@ -31,22 +33,23 @@ await initialize({
 
 interface AppProp {
   options: BundleOptions;
-  output: typeof output;
   templateURL?: string;
 }
 
-const App: FunctionComponent<AppProp> = ({ options, output, templateURL }) => {
-  const [state, setState] = useState<"building" | "done" | "error">("building");
+const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
+  const [state, setState] = useState<State>({ type: "building" });
 
   useEffect(() => {
     (async () => {
       const { entryURL, ...params } = options;
-      const entryPoints = [entryURL];
       const loaderMap = new Map<string, Loader>();
       try {
         const result = await build({
-          entryPoints,
+          entryPoints: [entryURL],
           ...params,
+          outdir: "/",
+          outbase: "https",
+          sourceRoot: "./",
           progressCallback: (message) => {
             if (message.type === "resolve") return;
             message.done.then(({ loader }) =>
@@ -54,109 +57,64 @@ const App: FunctionComponent<AppProp> = ({ options, output, templateURL }) => {
             );
           },
         });
+        console.log(result.outputFiles);
         const file = result.outputFiles[0];
-        const loader = loaderMap.get(file.path) ?? "text";
-        setState("done");
-        const url = loader === "dataurl" ? file.text : URL.createObjectURL(
-          await makeBlob(
-            file.contents,
-            loaderToMimeType(loader),
-            decodeURI(location.href),
-            templateURL,
-          ),
-        );
-        switch (output) {
-          case "newtab":
-          case "self": {
-            globalThis.open(
-              url,
-              output === "self" ? "_self" : undefined,
-            );
-            break;
-          }
-          case "download": {
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = templateURL ? "import.json" : `index.${loader}`;
-            a.style.display = "none";
-            a.click();
-            a.remove();
-            break;
-          }
-        }
-        if (loader !== "dataurl") URL.revokeObjectURL(url);
-      } catch (e) {
-        setState("error");
-        console.error(e);
+        const loader = loaderMap.get(entryURL) ?? "text";
+
+        setState({
+          type: "done",
+          code: templateURL
+            ? await applyTemplate(
+              file.text,
+              entryURL,
+              templateURL,
+              initialOptions.reload,
+            )
+            : file.text,
+          fileName: templateURL ? "import" : file.path,
+          loader: templateURL ? "json" : loader,
+        });
+      } catch (error: unknown) {
+        setState({ type: "error", error });
       }
     })();
-  }, []);
+  }, [templateURL, ...Object.values(options)]);
 
   return (
     <>
       <p>
-        {state === "building"
-          ? <>{Spinner}{"Building...please wait."}</>
-          : state === "done"
-          ? <>{CheckCircle}{"Finish building."}</>
-          : <>{TimesCircle}{"Failed to build."}</>}
+        {state.type === "building"
+          ? <>{Spinner}{" Building...please wait."}</>
+          : state.type === "done"
+          ? <>{CheckCircle}{" Finish building."}</>
+          : <>{TimesCircle}{" Failed to build."}</>}
       </p>
+      {state.type === "done" && <BuildResult {...state} />}
     </>
   );
 };
 
-const Spinner = <i className="fas fa-spinner" />;
-const CheckCircle = <i className="far fa-check-circle" />;
-const TimesCircle = <i className="far fa-times-circle" />;
+interface Building {
+  type: "building";
+}
+interface Built {
+  type: "done";
+  code: string;
+  loader: Loader;
+  fileName: string;
+}
+interface Failed {
+  type: "error";
+  error: unknown;
+}
 
-const makeBlob = async (
-  code: Uint8Array,
-  mimeType: string,
-  entryPointURL: string,
-  templateURL?: string,
-) => {
-  if (!templateURL) {
-    const blob = new Blob([code], { type: mimeType });
-    return blob;
-  }
-  const [res] = await fetch(new Request(templateURL), !initialOptions.reload);
-  const template = await res.text();
-  const sourceCode = new TextDecoder().decode(code);
-  const lines = template.replaceAll("@URL@", entryPointURL).split("\n").flatMap(
-    (line) => {
-      const text = line.replace(
-        /^(\s*)@CODE@/,
-        (_, space) =>
-          sourceCode.split(/\n/).map((line) => `${space}${line}`).join("\n"),
-      );
-      return text.split("\n");
-    },
-  );
-  const now = new Date().getTime() / 1000;
-  const json = {
-    pages: [{
-      title: lines[0],
-      created: now,
-      updated: now,
-      lines: lines.map((line) => ({
-        text: line,
-        created: now,
-        updated: now,
-      })),
-    }],
-  };
-
-  return new Blob([JSON.stringify(json)], {
-    type: "application/json;charset=UTF-8",
-  });
-};
+type State = Building | Built | Failed;
 
 const app = document.getElementById("app") as HTMLDivElement | null;
 if (!app) throw Error("Could not find `#app`.");
 render(
   <App
     options={initialOptions}
-    output={output}
     templateURL={templateURL}
   />,
   app,
