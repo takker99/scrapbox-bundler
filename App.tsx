@@ -57,7 +57,6 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             );
           },
         });
-        console.log(result.outputFiles);
         const file = result.outputFiles[0];
         const loader = loaderMap.get(entryURL) ?? "text";
 
