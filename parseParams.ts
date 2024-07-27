@@ -1,10 +1,11 @@
-import { BundleOptions, isFormat } from "./types.ts";
+import { BundleOptions } from "./App.tsx";
+import { isFormat } from "./isFormat.ts";
 
 export interface ParamOptions extends BundleOptions {
-  templateURL?: string;
+  templateURL?: URL;
 }
 
-export function parseSearchParams(searchParam: string): ParamOptions {
+export const parseSearchParams = (searchParam: string): ParamOptions => {
   const param = searchParam === "" ? "" : searchParam.slice(1);
   const params = new URLSearchParams(param);
   const bundle = params.get("bundle") === null ? false : true;
@@ -12,35 +13,46 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const format = params.get("format") ?? "esm";
   const define = parseDefine(params.getAll("define"));
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
-  const jsxFactory = params.get("jsxFactory") ?? "h";
-  const jsxFragment = params.get("jsxFragment") ?? "Fragment";
-  const entryURL = params.get("url") ?? "";
-  const reload = params.get("reload") === null ? false : true;
+  const jsxFactory = params.get("jsx-factory") ?? "h";
+  const jsxFragment = params.get("jsx-fragment") ?? "Fragment";
+  const entryPoints = [
+    ...params.getAll("entryPoints"),
+    ...params.getAll("url"),
+  ];
   const sourcemap = params.get("sourcemap") === null ? false : "inline";
   const external = params.getAll("external").map((url) =>
     // necessary because esbuild treats external as encoded URL
     encodeURI(url)
   );
+
+  const reload = params.get("reload") === null ? false : true;
   const importMapURL = params.get("importmap") ?? undefined;
   const templateURL = params.get("template") ?? undefined;
 
+  if (entryPoints.length === 0) {
+    alert("No entry points to build");
+    throw new Error("No entry points to build");
+  }
+
   return {
+    entryPoints,
     bundle,
     minify,
     format: isFormat(format) ? format : "esm",
     charset,
-    entryURL,
     external,
     define,
     jsxFactory,
     jsxFragment,
     reload,
     sourcemap,
-    importMapURL: importMapURL ? new URL(importMapURL, entryURL) : undefined,
-    templateURL,
+    importMapURL: importMapURL
+      ? new URL(importMapURL, entryPoints[0])
+      : undefined,
+    templateURL: templateURL ? new URL(templateURL, entryPoints[0]) : undefined,
   };
-}
-export function parseDefine(define: string[]) {
+};
+export const parseDefine = (define: string[]): Record<string, string> => {
   const defines = {} as Record<string, string>;
   for (const pair of define) {
     const pos = pair.indexOf(":");
@@ -51,4 +63,4 @@ export function parseDefine(define: string[]) {
     defines[key] = value;
   }
   return defines;
-}
+};

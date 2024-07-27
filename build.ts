@@ -5,7 +5,8 @@ import { build as esbuild, BuildOptions } from "./deps/esbuild-wasm.ts";
 import { remoteLoader, RemoteLoaderInit } from "./deps/remoteLoader.ts";
 import { fetch } from "./fetch.ts";
 
-export interface BuildInit extends Omit<BuildOptions, "write" | "plugins"> {
+export interface BuildInit
+  extends Omit<BuildOptions, "write" | "plugins" | "metafile"> {
   progressCallback?: RemoteLoaderInit["progressCallback"];
   reload?: boolean | URLPattern[];
   importMapURL?: URL;

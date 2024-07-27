@@ -1,6 +1,6 @@
 import { Loader } from "./deps/esbuild-wasm.ts";
 
-export const loaderToMimeType = (loader: Loader): string => {
+export const mimeType = (loader: Loader): string => {
   switch (loader) {
     case "css":
     case "local-css":
@@ -25,5 +25,29 @@ export const loaderToMimeType = (loader: Loader): string => {
       return "application/typescript";
     case "tsx":
       return "application/typescript";
+  }
+};
+
+export const extname = (loader: Loader): string => {
+  switch (loader) {
+    case "css":
+    case "js":
+    case "json":
+    case "jsx":
+    case "ts":
+    case "tsx":
+      return `.${loader}`;
+    case "base64":
+    case "binary":
+    case "copy":
+    case "dataurl":
+    case "default":
+    case "empty":
+    case "file":
+      return "";
+    case "local-css":
+      return ".css";
+    case "text":
+      return ".txt";
   }
 };
