@@ -1,7 +1,6 @@
 import { BundleOptions, isFormat } from "./types.ts";
 
 export interface ParamOptions extends BundleOptions {
-  output: "self" | "newtab" | "download";
   templateURL?: string;
 }
 
@@ -13,7 +12,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
   const format = params.get("format") ?? "esm";
   const define = parseDefine(params.getAll("define"));
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
-  const output = params.get("output") ?? "self";
   const jsxFactory = params.get("jsxFactory") ?? "h";
   const jsxFragment = params.get("jsxFragment") ?? "Fragment";
   const entryURL = params.get("url") ?? "";
@@ -34,7 +32,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     entryURL,
     external,
     define,
-    output: isOutput(output) ? output : "self",
     jsxFactory,
     jsxFragment,
     reload,
@@ -42,10 +39,6 @@ export function parseSearchParams(searchParam: string): ParamOptions {
     importMapURL: importMapURL ? new URL(importMapURL, entryURL) : undefined,
     templateURL,
   };
-}
-
-function isOutput(output: string): output is "self" | "newtab" | "download" {
-  return ["self", "newtab", "download"].includes(output);
 }
 export function parseDefine(define: string[]) {
   const defines = {} as Record<string, string>;
