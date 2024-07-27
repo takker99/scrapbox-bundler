@@ -8,14 +8,20 @@ import {
   FunctionComponent,
   h,
   render,
+  useCallback,
   useEffect,
   useState,
 } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
-import { BuildOptions, initialize, Loader } from "./deps/esbuild-wasm.ts";
+import {
+  BuildOptions,
+  initialize,
+  Loader,
+  Metafile,
+} from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
-import { CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
+import { ChartPie, CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
 import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
 import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
@@ -81,7 +87,6 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             );
           },
         });
-        console.log(result);
         const files = new Map(result.outputFiles.map((file) => {
           const url = restoreEntryPointURL(file.path);
           const loader = loaderMap.get(url.href) ?? "text";
@@ -100,6 +105,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           setState({
             type: "done",
             files: [...files.values()],
+            metafile: result.metafile,
           });
           return;
         }
@@ -116,6 +122,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
               type: "application/json",
             }),
           ],
+          metafile: result.metafile,
         });
       } catch (error: unknown) {
         console.error(error);
@@ -134,7 +141,22 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           : <>{TimesCircle}{" Failed to build."}</>}
       </p>
       {state.type === "done" &&
-        state.files.map((file) => <BuildResult file={file} />)}
+        (
+          <>
+            <p>
+              <MetafileButton metafile={state.metafile} />{" "}
+              You can visulaize the metafile with{" "}
+              <a
+                href="https://esbuild.github.io/analyze"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                esbuild Bundle Size Analyzer
+              </a>
+            </p>
+            {state.files.map((file) => <BuildResult file={file} />)}
+          </>
+        )}
     </>
   );
 };
@@ -145,6 +167,7 @@ interface Building {
 interface Built {
   type: "done";
   files: File[];
+  metafile: Metafile;
 }
 interface Failed {
   type: "error";
@@ -162,3 +185,26 @@ render(
   />,
   app,
 );
+
+const MetafileButton: FunctionComponent<{
+  metafile: Metafile;
+}> = ({ metafile }) => {
+  const download = useCallback(() => {
+    const blob = new Blob([JSON.stringify(metafile)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "metafile.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [metafile]);
+
+  return (
+    <button className="metafile" onClick={download} title="download metafile">
+      {ChartPie}
+      {" Download Metafile"}
+    </button>
+  );
+};
