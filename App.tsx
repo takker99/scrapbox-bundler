@@ -9,15 +9,13 @@ import {
   h,
   render,
   useEffect,
-  useMemo,
   useState,
 } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import { BundleOptions } from "./types.ts";
 import { loaderToMimeType } from "./loaderToMimeType.ts";
-import { DependencyGraph, DependencyNode } from "./DependencyGraph.tsx";
-import { initialize } from "./deps/esbuild-wasm.ts";
+import { initialize, Loader } from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
 
 const { output, templateURL, ...initialOptions } = parseSearchParams(
@@ -39,90 +37,25 @@ interface AppProp {
 
 const App: FunctionComponent<AppProp> = ({ options, output, templateURL }) => {
   const [state, setState] = useState<"building" | "done" | "error">("building");
-  const [pathMap, setPathMap] = useState<Map<string, DependencyNode>>(
-    new Map(),
-  );
+
   useEffect(() => {
     (async () => {
-      let presentPathMap = pathMap;
       const { entryURL, ...params } = options;
       const entryPoints = [entryURL];
+      const loaderMap = new Map<string, Loader>();
       try {
         const result = await build({
           entryPoints,
           ...params,
           progressCallback: (message) => {
-            switch (message.type) {
-              case "resolve":
-                setPathMap((prev) => {
-                  const node: DependencyNode = prev.get(message.path) ??
-                    {
-                      path: message.path,
-                      external: message.external,
-                      loader: "text",
-                      loaded: false,
-                      byte: 0,
-                      bytesInOutput: 0,
-                      isCache: false,
-                      children: [],
-                    };
-                  prev.set(message.path, node);
-                  if (message.parent) {
-                    node.firstParentPath ??= message.parent;
-                    const parent = prev.get(message.parent) ?? {
-                      path: message.parent,
-                      external: false,
-                      loader: "text",
-                      loaded: false,
-                      byte: 0,
-                      bytesInOutput: 0,
-                      isCache: false,
-                      children: [],
-                    };
-                    parent.children = [...parent.children, node];
-                    prev.set(message.parent, parent);
-                  }
-                  presentPathMap = new Map(prev);
-                  return presentPathMap;
-                });
-                break;
-              case "load":
-                message.done.then(({ size, isCache, loader }) =>
-                  setPathMap((prev) => {
-                    const path = prev.get(message.path) ?? {
-                      ...message,
-                      loader,
-                      external: false,
-                      loaded: true,
-                      byte: size,
-                      bytesInOutput: size,
-                      isCache,
-                      children: [],
-                    };
-                    path.loader = loader, path.loaded = true;
-                    path.byte = size;
-                    path.bytesInOutput = size;
-                    path.isCache = isCache;
-                    presentPathMap = new Map(prev);
-                    return presentPathMap;
-                  })
-                );
-                break;
-            }
+            if (message.type === "resolve") return;
+            message.done.then(({ loader }) =>
+              loaderMap.set(message.path, loader)
+            );
           },
         });
-        setPathMap((prev) => {
-          const outputs = [...Object.values(result.metafile.outputs)].reduce(
-            (input, cur) => ({ ...input, ...cur.inputs }),
-            {} as Record<string, { bytesInOutput: number }>,
-          );
-          for (const [key, node] of prev) {
-            node.bytesInOutput = outputs[key]?.bytesInOutput ?? 0;
-          }
-          return new Map(prev);
-        });
         const file = result.outputFiles[0];
-        const loader = presentPathMap.get(file.path)?.loader ?? "text";
+        const loader = loaderMap.get(file.path) ?? "text";
         setState("done");
         const url = loader === "dataurl" ? file.text : URL.createObjectURL(
           await makeBlob(
@@ -159,27 +92,22 @@ const App: FunctionComponent<AppProp> = ({ options, output, templateURL }) => {
     })();
   }, []);
 
-  const entryPoints = useMemo(
-    () =>
-      options.importMapURL
-        ? [options.entryURL, options.importMapURL.href]
-        : [options.entryURL],
-    [options.entryURL, options.importMapURL],
-  );
-
   return (
     <>
       <p>
         {state === "building"
-          ? "Building...please wait."
+          ? <>{Spinner}{"Building...please wait."}</>
           : state === "done"
-          ? "Finish building."
-          : "Failed to build."}
+          ? <>{CheckCircle}{"Finish building."}</>
+          : <>{TimesCircle}{"Failed to build."}</>}
       </p>
-      <DependencyGraph pathMap={pathMap} entryPoints={entryPoints} />
     </>
   );
 };
+
+const Spinner = <i className="fas fa-spinner" />;
+const CheckCircle = <i className="far fa-check-circle" />;
+const TimesCircle = <i className="far fa-times-circle" />;
 
 const makeBlob = async (
   code: Uint8Array,
