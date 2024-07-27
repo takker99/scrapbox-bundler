@@ -1,12 +1,13 @@
 import { getUnixTime } from "https://esm.sh/v135/date-fns@3.4.0/getUnixTime.mjs";
 import { fetch } from "./fetch.ts";
+import { ImportedData } from "./deps/scrapbox.ts";
 
 export const applyTemplate = async (
   code: string,
   entryPointURL: string,
   templateURL: string,
   reload?: boolean,
-): Promise<string> => {
+): Promise<ImportedData<true>> => {
   const [res] = await fetch(new Request(templateURL), !reload);
   const template = await res.text();
   const splitted = code.split("\n");
@@ -18,11 +19,9 @@ export const applyTemplate = async (
       ).split("\n"),
   );
   const now = getUnixTime(new Date());
-  const json = {
+  return {
     pages: [{
       title: lines[0],
-      created: now,
-      updated: now,
       lines: lines.map((line) => ({
         text: line,
         created: now,
@@ -30,6 +29,4 @@ export const applyTemplate = async (
       })),
     }],
   };
-
-  return JSON.stringify(json);
 };

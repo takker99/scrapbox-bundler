@@ -60,19 +60,27 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
         const file = result.outputFiles[0];
         const loader = loaderMap.get(entryURL) ?? "text";
 
-        setState({
-          type: "done",
-          code: templateURL
-            ? await applyTemplate(
-              file.text,
-              entryURL,
-              templateURL,
-              initialOptions.reload,
-            )
-            : file.text,
-          fileName: templateURL ? "import" : file.path,
-          loader: templateURL ? "json" : loader,
-        });
+        if (templateURL) {
+          const data = await applyTemplate(
+            file.text,
+            entryURL,
+            templateURL,
+            initialOptions.reload,
+          );
+          setState({
+            type: "done",
+            code: JSON.stringify(data),
+            fileName: data.pages.length === 1 ? data.pages[0].title : "import",
+            loader: "json",
+          });
+        } else {
+          setState({
+            type: "done",
+            code: file.text,
+            fileName: file.path,
+            loader,
+          });
+        }
       } catch (error: unknown) {
         setState({ type: "error", error });
       }
