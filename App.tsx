@@ -89,14 +89,12 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
         });
         const files = new Map(result.outputFiles.map((file) => {
           const url = restoreEntryPointURL(file.path);
-          const loader = loaderMap.get(url.href) ?? "text";
+          const loader = loaderMap.get(url) ?? "text";
           const ext = extname(loader);
-          const fileName = url.href.endsWith(ext)
-            ? url.href
-            : `${url.href}#${ext}`;
+          const fileName = url.endsWith(ext) ? url : `${url}#${ext}`;
 
           return [
-            url.href,
+            url,
             new File([file.contents], fileName, { type: mimeType(loader) }),
           ];
         }));
