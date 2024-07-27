@@ -20,7 +20,7 @@ import { CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
 import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
 
-const { output, templateURL, ...initialOptions } = parseSearchParams(
+const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
 
@@ -33,7 +33,6 @@ await initialize({
 
 interface AppProp {
   options: BundleOptions;
-  output: typeof output;
   templateURL?: string;
 }
 
@@ -116,7 +115,6 @@ if (!app) throw Error("Could not find `#app`.");
 render(
   <App
     options={initialOptions}
-    output={output}
     templateURL={templateURL}
   />,
   app,
