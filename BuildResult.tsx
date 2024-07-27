@@ -3,30 +3,30 @@
 /// <reference lib="dom" />
 /** @jsx h */
 
-import { FunctionComponent, h, useMemo } from "./deps/preact.tsx";
-import { loaderToMimeType } from "./loaderToMimeType.ts";
-import { Loader } from "./deps/esbuild-wasm.ts";
+import {
+  FunctionComponent,
+  h,
+  RefCallback,
+  useCallback,
+} from "./deps/preact.tsx";
 import { useObjectURL } from "./useObjectURL.ts";
 import { FileDownload } from "./Icons.tsx";
 import { ExternalLinkAlt } from "./Icons.tsx";
 import { useCopy } from "./useCopy.tsx";
 
 export const BuildResult: FunctionComponent<{
-  code: string;
-  fileName: string;
-  loader: Loader;
-}> = ({ code, loader, fileName }) => {
-  const { copy, Copy } = useCopy(code);
-  const blobURL = useObjectURL([code], { type: loaderToMimeType(loader) });
-  const url = useMemo(() => loader === "dataurl" ? code : blobURL, [
-    loader,
-    code,
-    blobURL,
-  ]);
+  file: File;
+}> = ({ file }) => {
+  const { copy, Copy } = useCopy(file);
+  const url = useObjectURL(file);
+  const load: RefCallback<HTMLElement> = useCallback((el) => {
+    if (!el) return;
+    file.text().then((text) => el.textContent = text);
+  }, [file]);
 
   return (
     <p className="build-result">
-      <pre className="title"><code>{fileName}</code></pre>
+      <pre className="title"><code>{file.name}</code></pre>
       <button className="copy" onClick={copy} title="copy the code">
         {Copy}
       </button>
@@ -41,12 +41,12 @@ export const BuildResult: FunctionComponent<{
       <a
         className="download"
         href={url}
-        download={fileName}
+        download={file.name}
         title="download the code"
       >
         {FileDownload}
       </a>
-      <pre className="code"><code>{code}</code></pre>
+      <pre className="code"><code ref={load} /></pre>
     </p>
   );
 };

@@ -1,23 +1,26 @@
 import { getUnixTime } from "https://esm.sh/v135/date-fns@3.4.0/getUnixTime.mjs";
 import { fetch } from "./fetch.ts";
 import { ImportedData } from "./deps/scrapbox.ts";
+import { escape } from "./deps/regexp.ts";
 
 export const applyTemplate = async (
-  code: string,
-  entryPointURL: string,
-  templateURL: string,
+  files: Map<string, Blob>,
+  buildURL: Location,
+  templateURL: URL,
   reload?: boolean,
 ): Promise<ImportedData<true>> => {
   const [res] = await fetch(new Request(templateURL), !reload);
   const template = await res.text();
-  const splitted = code.split("\n");
-  const lines = template.replaceAll("@URL@", entryPointURL).split("\n").flatMap(
-    (line) =>
-      line.replace(
-        /^(\s*)@CODE@/,
-        (_, space) => splitted.map((line) => `${space}${line}`).join("\n"),
-      ).split("\n"),
-  );
+  let replaced = template.replaceAll("@URL@", buildURL.href);
+  for (const [path, blob] of files) {
+    const splitted = (await blob.text()).split("\n");
+    const regExp = new RegExp(`^(\\s*)@${escape(path)}@$`, "gmu");
+    replaced = replaced.replace(
+      regExp,
+      (_, space) => splitted.map((line) => `${space}${line}`).join("\n"),
+    );
+  }
+  const lines = replaced.split("\n");
   const now = getUnixTime(new Date());
   return {
     pages: [{

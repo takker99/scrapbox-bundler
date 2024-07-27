@@ -13,12 +13,13 @@ import {
 } from "./deps/preact.tsx";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
-import { BundleOptions } from "./types.ts";
-import { initialize, Loader } from "./deps/esbuild-wasm.ts";
+import { BuildOptions, initialize, Loader } from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
 import { CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
 import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
+import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
+import { extname, mimeType } from "./loader.ts";
 
 const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
@@ -31,9 +32,34 @@ await initialize({
   ),
 });
 
+export interface BundleOptions extends
+  Pick<
+    BuildOptions,
+    | "bundle"
+    | "minify"
+    | "format"
+    | "charset"
+    | "external"
+    | "define"
+    | "jsx"
+    | "jsxDev"
+    | "jsxFactory"
+    | "jsxFragment"
+    | "jsxImportSource"
+    | "jsxSideEffects"
+    | "supported"
+    | "target"
+    | "sourcemap"
+    | "keepNames"
+  > {
+  reload: boolean;
+  entryPoints: string[];
+  importMapURL?: URL;
+}
+
 interface AppProp {
   options: BundleOptions;
-  templateURL?: string;
+  templateURL?: URL;
 }
 
 const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
@@ -41,15 +67,13 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
 
   useEffect(() => {
     (async () => {
-      const { entryURL, ...params } = options;
+      const { entryPoints, ...params } = options;
       const loaderMap = new Map<string, Loader>();
       try {
         const result = await build({
-          entryPoints: [entryURL],
+          entryPoints: entryPoints.map((url) => ({ in: url, out: url })),
           ...params,
-          outdir: "/",
-          outbase: "https",
-          sourceRoot: "./",
+          outdir: "./",
           progressCallback: (message) => {
             if (message.type === "resolve") return;
             message.done.then(({ loader }) =>
@@ -57,31 +81,44 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             );
           },
         });
-        const file = result.outputFiles[0];
-        const loader = loaderMap.get(entryURL) ?? "text";
+        console.log(result);
+        const files = new Map(result.outputFiles.map((file) => {
+          const url = restoreEntryPointURL(file.path);
+          const loader = loaderMap.get(url.href) ?? "text";
+          const ext = extname(loader);
+          const fileName = url.href.endsWith(ext)
+            ? url.href
+            : `${url.href}#${ext}`;
 
-        if (templateURL) {
-          const data = await applyTemplate(
-            file.text,
-            entryURL,
-            templateURL,
-            initialOptions.reload,
-          );
+          return [
+            url.href,
+            new File([file.contents], fileName, { type: mimeType(loader) }),
+          ];
+        }));
+
+        if (!templateURL) {
           setState({
             type: "done",
-            code: JSON.stringify(data),
-            fileName: data.pages.length === 1 ? data.pages[0].title : "import",
-            loader: "json",
+            files: [...files.values()],
           });
-        } else {
-          setState({
-            type: "done",
-            code: file.text,
-            fileName: file.path,
-            loader,
-          });
+          return;
         }
+        const data = await applyTemplate(
+          files,
+          location,
+          templateURL,
+          initialOptions.reload,
+        );
+        setState({
+          type: "done",
+          files: [
+            new File([JSON.stringify(data)], data.pages[0].title, {
+              type: "application/json",
+            }),
+          ],
+        });
       } catch (error: unknown) {
+        console.error(error);
         setState({ type: "error", error });
       }
     })();
@@ -96,7 +133,8 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           ? <>{CheckCircle}{" Finish building."}</>
           : <>{TimesCircle}{" Failed to build."}</>}
       </p>
-      {state.type === "done" && <BuildResult {...state} />}
+      {state.type === "done" &&
+        state.files.map((file) => <BuildResult file={file} />)}
     </>
   );
 };
@@ -106,9 +144,7 @@ interface Building {
 }
 interface Built {
   type: "done";
-  code: string;
-  loader: Loader;
-  fileName: string;
+  files: File[];
 }
 interface Failed {
   type: "error";
