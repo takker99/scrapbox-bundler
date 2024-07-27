@@ -29,6 +29,10 @@
         margin: unset;
     }
 
+    .metafile {
+        width: fit-content
+    }
+
     .build-result {
         display: grid;
         grid-template:
