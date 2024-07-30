@@ -2,14 +2,20 @@ import { getUnixTime } from "https://esm.sh/v135/date-fns@3.4.0/getUnixTime.mjs"
 import { fetch } from "./fetch.ts";
 import { ImportedData } from "./deps/scrapbox.ts";
 import { escape } from "./deps/regexp.ts";
+import { createOk, isErr, Result, unwrapOk } from "./deps/option-t.ts";
+import { AbortError, HTTPError, NetworkError } from "./deps/remoteLoader.ts";
 
 export const applyTemplate = async (
   files: Map<string, Blob>,
   buildURL: Location,
   templateURL: URL,
   reload?: boolean,
-): Promise<ImportedData<true>> => {
-  const [res] = await fetch(new Request(templateURL), !reload);
+): Promise<
+  Result<ImportedData<true>, NetworkError | AbortError | HTTPError>
+> => {
+  const result = await fetch(new Request(templateURL), !reload);
+  if (isErr(result)) return result;
+  const [res] = unwrapOk(result);
   const template = await res.text();
   let replaced = template.replaceAll("@URL@", buildURL.href);
   for (const [path, blob] of files) {
@@ -22,7 +28,7 @@ export const applyTemplate = async (
   }
   const lines = replaced.split("\n");
   const now = getUnixTime(new Date());
-  return {
+  return createOk({
     pages: [{
       title: lines[0],
       lines: lines.map((line) => ({
@@ -31,5 +37,5 @@ export const applyTemplate = async (
         updated: now,
       })),
     }],
-  };
+  });
 };
