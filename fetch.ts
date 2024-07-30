@@ -14,7 +14,7 @@ export const fetch: RobustFetch = async (req, cacheFirst) => {
     return res ? createOk([res, true]) : result;
   }
   const [res, fromCache] = unwrapOk(result);
-  if (!fromCache && /^https?$/.test(new URL(request.url).protocol)) {
+  if (!fromCache && !/^data:|^blob:/.test(request.url)) {
     await cache.put(request, res.clone());
   }
   return createOk([res, fromCache]);

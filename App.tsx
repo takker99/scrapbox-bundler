@@ -86,7 +86,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
       try {
         let dataURL: string | undefined;
         if (importMapURL) {
-          const result = await fetch(new Request(importMapURL), options.reload);
+          const result = await fetch(new Request(importMapURL), !options.reload);
           if (isErr(result)) throw Error("Failed to fetch import map.");
           const [res] = unwrapOk(result);
           dataURL = await toDataURL(await res.blob());
