@@ -1,28 +1,23 @@
-import { RemoteLoaderInit } from "./deps/remoteLoader.ts";
+import { createOk, isErr, unwrapOk } from "./deps/option-t.ts";
+import { RobustFetch, robustFetch } from "./deps/remoteLoader.ts";
 
 const cache = await globalThis.caches.open("v1");
-export const fetch: RemoteLoaderInit["fetch"] = async (req, cacheFirst) => {
+export const fetch: RobustFetch = async (req, cacheFirst) => {
   const request = proxy(req);
   if (cacheFirst) {
     const res = await cache.match(request);
-    if (res) return [res, true];
+    if (res) return createOk([res, true]);
   }
-
-  try {
-    const res = await globalThis.fetch(request);
-    if (res.ok) {
-      if (/^https?$/.test(new URL(request.url).protocol)) {
-        await cache.put(request, res.clone());
-      }
-      return [res, false];
-    }
-    throw new TypeError(`${res.status} ${res.statusText}`);
-  } catch (e: unknown) {
-    if (!(e instanceof TypeError)) throw e;
+  const result = await robustFetch(request, cacheFirst);
+  if (isErr(result)) {
     const res = await cache.match(request);
-    if (res) return [res, true];
-    throw e;
+    return res ? createOk([res, true]) : result;
   }
+  const [res, fromCache] = unwrapOk(result);
+  if (!fromCache && !/^data:|^blob:/.test(request.url)) {
+    await cache.put(request, res.clone());
+  }
+  return createOk([res, fromCache]);
 };
 
 const proxy = (req: Request): Request => {

@@ -26,17 +26,25 @@ import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
 import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
 import { extname, mimeType } from "./loader.ts";
+import { isErr, unwrapOk } from "./deps/option-t.ts";
+import { toDataURL } from "./deps/toDataURL.ts";
 
 const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
 
-await initialize({
-  workerURL: "./worker.js",
-  wasmModule: await WebAssembly.compileStreaming(
-    (await fetch(new Request("./esbuild.wasm"), !initialOptions.reload))[0],
-  ),
-});
+{
+  const result = await fetch(
+    new Request("./esbuild.wasm"),
+    !initialOptions.reload,
+  );
+  if (isErr(result)) throw Error("Failed to fetch esbuild.wasm.");
+
+  await initialize({
+    workerURL: "./worker.js",
+    wasmModule: await WebAssembly.compileStreaming(unwrapOk(result)[0]),
+  });
+}
 
 export interface BundleOptions extends
   Pick<
@@ -73,21 +81,29 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
 
   useEffect(() => {
     (async () => {
-      const { entryPoints, ...params } = options;
+      const { entryPoints, importMapURL, ...params } = options;
       const loaderMap = new Map<string, Loader>();
       try {
-        const result = await build({
+        let dataURL: string | undefined;
+        if (importMapURL) {
+          const result = await fetch(new Request(importMapURL), !options.reload);
+          if (isErr(result)) throw Error("Failed to fetch import map.");
+          const [res] = unwrapOk(result);
+          dataURL = await toDataURL(await res.blob());
+        }
+
+        const buildResult = await build({
           entryPoints: entryPoints.map((url) => ({ in: url, out: url })),
           ...params,
+          importMapURL: dataURL,
           outdir: "./",
-          progressCallback: (message) => {
-            if (message.type === "resolve") return;
+          onProgress: (message) => {
             message.done.then(({ loader }) =>
-              loaderMap.set(message.path, loader)
+              loaderMap.set(message.path.href, loader)
             );
           },
         });
-        const files = new Map(result.outputFiles.map((file) => {
+        const files = new Map(buildResult.outputFiles.map((file) => {
           const url = restoreEntryPointURL(file.path);
           const loader = loaderMap.get(url) ?? "text";
           const ext = extname(loader);
@@ -103,16 +119,18 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           setState({
             type: "done",
             files: [...files.values()],
-            metafile: result.metafile,
+            metafile: buildResult.metafile,
           });
           return;
         }
-        const data = await applyTemplate(
+        const result = await applyTemplate(
           files,
           location,
           templateURL,
           initialOptions.reload,
         );
+        if (isErr(result)) throw new Error("Failed to fetch template.");
+        const data = unwrapOk(result);
         setState({
           type: "done",
           files: [
@@ -120,7 +138,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
               type: "application/json",
             }),
           ],
-          metafile: result.metafile,
+          metafile: buildResult.metafile,
         });
       } catch (error: unknown) {
         console.error(error);
