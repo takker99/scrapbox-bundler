@@ -18,9 +18,15 @@ export const applyTemplate = async (
   const [res] = unwrapOk(result);
   const template = await res.text();
   let replaced = template.replaceAll("@URL@", buildURL.href);
+  let first = true;
   for (const [path, blob] of files) {
     const splitted = (await blob.text()).split("\n");
-    const regExp = new RegExp(`^(\\s*)@${escape(path)}@$`, "gmu");
+    const regExp = new RegExp(
+      // 後方互換性のため、最初のパスだけCODEにもマッチさせる
+      `^(\\s*)@${first ? `(?:${escape(path)}|CODE)` : escape(path)}@$`,
+      "gmu",
+    );
+    first = false;
     replaced = replaced.replace(
       regExp,
       (_, space) => splitted.map((line) => `${space}${line}`).join("\n"),
