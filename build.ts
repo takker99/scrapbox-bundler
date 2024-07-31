@@ -10,11 +10,12 @@ import {
   resolver,
 } from "./deps/remoteLoader.ts";
 import { fetch } from "./fetch.ts";
+import { Reload } from "./reload.ts";
 
 export interface BuildInit
   extends Omit<BuildOptions, "write" | "plugins" | "metafile"> {
   onProgress?: RemoteLoaderInit["onProgress"];
-  reload?: boolean | URLPattern[];
+  reload: Reload;
   /** as a data URL */
   importMapURL?: string;
 }
