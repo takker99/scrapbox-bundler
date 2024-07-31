@@ -4,16 +4,20 @@ import { ImportedData } from "./deps/scrapbox.ts";
 import { escape } from "./deps/regexp.ts";
 import { createOk, isErr, Result, unwrapOk } from "./deps/option-t.ts";
 import { AbortError, HTTPError, NetworkError } from "./deps/remoteLoader.ts";
+import { preferReload, Reload } from "./reload.ts";
 
 export const applyTemplate = async (
   files: Map<string, Blob>,
   buildURL: Location,
   templateURL: URL,
-  reload?: boolean,
+  reload: Reload,
 ): Promise<
   Result<ImportedData<true>, NetworkError | AbortError | HTTPError>
 > => {
-  const result = await fetch(new Request(templateURL), !reload);
+  const result = await fetch(
+    new Request(templateURL),
+    !preferReload(templateURL, reload),
+  );
   if (isErr(result)) return result;
   const [res] = unwrapOk(result);
   const template = await res.text();

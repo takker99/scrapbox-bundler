@@ -28,15 +28,17 @@ import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
 import { extname, mimeType } from "./loader.ts";
 import { isErr, unwrapOk } from "./deps/option-t.ts";
 import { toDataURL } from "./deps/toDataURL.ts";
+import { preferReload, Reload } from "./reload.ts";
 
 const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
 );
 
 {
+  const wasmURL = new URL("./esbuild.wasm", import.meta.url);
   const result = await fetch(
     new Request("./esbuild.wasm"),
-    !initialOptions.reload,
+    !preferReload(wasmURL, initialOptions.reload),
   );
   if (isErr(result)) throw Error("Failed to fetch esbuild.wasm.");
 
@@ -66,7 +68,7 @@ export interface BundleOptions extends
     | "sourcemap"
     | "keepNames"
   > {
-  reload: boolean;
+  reload: Reload;
   entryPoints: string[];
   importMapURL?: URL;
 }
@@ -88,7 +90,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
         if (importMapURL) {
           const result = await fetch(
             new Request(importMapURL),
-            !options.reload,
+            !preferReload(importMapURL, options.reload),
           );
           if (isErr(result)) throw Error("Failed to fetch import map.");
           const [res] = unwrapOk(result);

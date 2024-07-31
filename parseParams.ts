@@ -1,5 +1,8 @@
+import "./deps/urlpattern-polyfill.ts";
+import { Reload } from "./reload.ts";
 import { BundleOptions } from "./App.tsx";
 import { isFormat } from "./isFormat.ts";
+import { isBoolean } from "./deps/unknownutil.ts";
 
 export interface ParamOptions extends BundleOptions {
   templateURL?: URL;
@@ -25,7 +28,19 @@ export const parseSearchParams = (searchParam: string): ParamOptions => {
     encodeURI(url)
   );
 
-  const reload = params.get("reload") === null ? false : true;
+  const reload = params.getAll("reload").reduce((acc, cur) => {
+    if (cur === "" || isBoolean(acc)) return true;
+    try {
+      const pattern = new URLPattern(cur);
+      return [...acc, pattern];
+    } catch (e: unknown) {
+      if (e instanceof TypeError) {
+        alert(`"${cur}" is not a valid URL pattern`);
+      }
+      console.error(e);
+      throw e;
+    }
+  }, [] as Reload);
   const importMapURL = params.get("importmap") ?? undefined;
   const templateURL = params.get("template") ?? undefined;
 
