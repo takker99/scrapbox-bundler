@@ -16,8 +16,12 @@ export const parseSearchParams = (searchParam: string): ParamOptions => {
   const format = params.get("format") ?? "esm";
   const define = parseDefine(params.getAll("define"));
   const charset = params.get("noUtf8") === null ? "utf8" : undefined;
-  const jsxFactory = params.get("jsx-factory") ?? "h";
-  const jsxFragment = params.get("jsx-fragment") ?? "Fragment";
+  const jsx = parseJsx(params.get("jsx"));
+  const jsxDev = params.get("jsx-dev") === null ? false : true;
+  const jsxImportSource = params.get("jsx-import-source") ?? undefined;
+  const jsxFactory = params.get("jsx-factory") ?? undefined;
+  const jsxFragment = params.get("jsx-fragment") ?? undefined;
+  const jsxSideEffects = params.get("jsx-side-effects") === null ? false : true;
   const entryPoints = [
     ...params.getAll("entryPoints"),
     ...params.getAll("url"),
@@ -57,8 +61,12 @@ export const parseSearchParams = (searchParam: string): ParamOptions => {
     charset,
     external,
     define,
+    jsx,
+    jsxDev,
     jsxFactory,
     jsxFragment,
+    jsxImportSource,
+    jsxSideEffects,
     reload,
     sourcemap,
     importMapURL: importMapURL
@@ -67,6 +75,14 @@ export const parseSearchParams = (searchParam: string): ParamOptions => {
     templateURL: templateURL ? new URL(templateURL, entryPoints[0]) : undefined,
   };
 };
+
+const parseJsx = (
+  jsx: string | null,
+): "transform" | "preserve" | "automatic" | undefined =>
+  jsx === "transform" || jsx === "preserve" || jsx === "automatic"
+    ? jsx
+    : undefined;
+
 export const parseDefine = (define: string[]): Record<string, string> => {
   const defines = {} as Record<string, string>;
   for (const pair of define) {
