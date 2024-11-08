@@ -1,4 +1,4 @@
-#!/usr/bin/env deno run --config deno.jsonc
+#!/usr/bin/env deno run --config deno.jsonc --no-lock
 import { Application, Router } from "https://deno.land/x/oak@v11.1.0/mod.ts#^";
 
 const router = new Router();
