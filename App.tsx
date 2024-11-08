@@ -4,8 +4,10 @@ import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import {
   BuildOptions,
+  formatMessages,
   initialize,
   Loader,
+  Message,
   Metafile,
 } from "./deps/esbuild-wasm.ts";
 import { fetch } from "./fetch.ts";
@@ -17,6 +19,8 @@ import { extname, mimeType } from "./loader.ts";
 import { isErr, unwrapOk } from "option-t/plain_result";
 import { toDataURL } from "./deps/toDataURL.ts";
 import { preferReload, Reload } from "./reload.ts";
+import { isArray } from "@core/unknownutil/is/array";
+import { isRecord } from "@core/unknownutil/is/record";
 
 const { templateURL, ...initialOptions } = parseSearchParams(
   location.search,
@@ -108,11 +112,20 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           ];
         }));
 
+        const errors = await formatMessages(buildResult.errors, {
+          kind: "error",
+        });
+        const warnings = await formatMessages(buildResult.warnings, {
+          kind: "warning",
+        });
+
         if (!templateURL) {
           setState({
             type: "done",
             files: [...files.values()],
             metafile: buildResult.metafile,
+            errors,
+            warnings,
           });
           return;
         }
@@ -132,10 +145,28 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             }),
           ],
           metafile: buildResult.metafile,
+          errors,
+          warnings,
         });
       } catch (error: unknown) {
         console.error(error);
-        setState({ type: "error", error });
+
+        const errors = await formatMessages(
+          isRecord(error) && isArray(error.errors)
+            ? error.errors as Message[]
+            : [],
+          { kind: "error" },
+        );
+        const warnings = await formatMessages(
+          isRecord(error) && isArray(error.warnings)
+            ? error.warnings as Message[]
+            : [],
+          { kind: "warning" },
+        );
+        if (errors.length === 0 && error instanceof Error) {
+          errors.push(`${error}`);
+        }
+        setState({ type: "error", error, errors, warnings });
       }
     })();
   }, [templateURL, ...Object.values(options)]);
@@ -147,8 +178,31 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
           ? <>{Spinner}{" Building...please wait."}</>
           : state.type === "done"
           ? <>{CheckCircle}{" Finish building."}</>
-          : <>{TimesCircle}{" Failed to build."}</>}
+          : <>{TimesCircle} {" Failed to build."}</>}
       </p>
+      {state.type !== "building" &&
+        state.errors.length + state.warnings.length > 0 && (
+        <>
+          {state.errors.length > 0 && (
+            <p>
+              <strong>{state.errors.length} Errors:</strong>
+              <ul>
+                {state.errors.map((error) => <pre><code>{error}</code></pre>)}
+              </ul>
+            </p>
+          )}
+          {state.warnings.length > 0 && (
+            <p>
+              <strong>{state.warnings.length} Warnings:</strong>
+              <ul>
+                {state.warnings.map((warning) => (
+                  <pre><code>{warning}</code></pre>
+                ))}
+              </ul>
+            </p>
+          )}
+        </>
+      )}
       {state.type === "done" &&
         (
           <>
@@ -177,10 +231,14 @@ interface Built {
   type: "done";
   files: File[];
   metafile: Metafile;
+  errors: string[];
+  warnings: string[];
 }
 interface Failed {
   type: "error";
   error: unknown;
+  errors: string[];
+  warnings: string[];
 }
 
 type State = Building | Built | Failed;
