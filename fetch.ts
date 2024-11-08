@@ -3,14 +3,16 @@ import { RobustFetch, robustFetch } from "./deps/remoteLoader.ts";
 import { version } from "./deps/esbuild-wasm.ts";
 
 // Clear caches when the version changes
-for (const name of await globalThis.caches.keys()) {
-  if (name !== version) {
-    const cache = await globalThis.caches.open(name);
-    for (const req of await cache.keys()) {
-      await cache.delete(req);
+(async () => {
+  for (const name of await globalThis.caches.keys()) {
+    if (name !== version) {
+      const cache = await globalThis.caches.open(name);
+      for (const req of await cache.keys()) {
+        await cache.delete(req);
+      }
     }
   }
-}
+})();
 const cache = await globalThis.caches.open(version);
 
 export const fetch: RobustFetch = async (req, cacheFirst) => {
