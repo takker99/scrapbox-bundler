@@ -5,6 +5,6 @@
   },
   "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
   "installCommand": "curl -fsSL https://deno.land/x/install/install.sh | sh -s v2.0.5",
-  "buildCommand": "$HOME/.deno/bin/deno task build",
+  "buildCommand": "$HOME/.deno/bin/deno task build && rm deno.lock",
   "outputDirectory": "assets"
 }
