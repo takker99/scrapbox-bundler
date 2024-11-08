@@ -1,3 +1,5 @@
 .vercel
 assets/index.js
+assets/index.js.map
 assets/worker.js
+assets/worker.js.map

@@ -1,9 +1,3 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-/** @jsx h */
-import { h } from "./deps/preact.tsx";
-
 export const Spinner = <i className="fas fa-spinner" />;
 export const CheckCircle = <i className="far fa-check-circle" />;
 export const TimesCircle = <i className="far fa-times-circle" />;

@@ -1,4 +1,4 @@
-import { createOk, isErr, unwrapOk } from "./deps/option-t.ts";
+import { createOk, isErr, unwrapOk } from "option-t/plain_result";
 import { RobustFetch, robustFetch } from "./deps/remoteLoader.ts";
 
 const cache = await globalThis.caches.open("v1");

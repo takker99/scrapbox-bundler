@@ -1,17 +1,5 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-/** @jsx h */
-/** @jsxFrag Fragment */
-import {
-  Fragment,
-  FunctionComponent,
-  h,
-  render,
-  useCallback,
-  useEffect,
-  useState,
-} from "./deps/preact.tsx";
+import { FunctionComponent, render } from "preact";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import {
@@ -26,7 +14,7 @@ import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
 import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
 import { extname, mimeType } from "./loader.ts";
-import { isErr, unwrapOk } from "./deps/option-t.ts";
+import { isErr, unwrapOk } from "option-t/plain_result";
 import { toDataURL } from "./deps/toDataURL.ts";
 import { preferReload, Reload } from "./reload.ts";
 

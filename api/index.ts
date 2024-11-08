@@ -1,4 +1,5 @@
-import { Application, Router } from "../deps/oak.ts";
+#!/usr/bin/env deno run --config deno.jsonc
+import { Application, Router } from "https://deno.land/x/oak@v11.1.0/mod.ts#^";
 
 const router = new Router();
 router.get(

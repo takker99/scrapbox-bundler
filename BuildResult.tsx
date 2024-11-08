@@ -1,14 +1,5 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-/** @jsx h */
-
-import {
-  FunctionComponent,
-  h,
-  RefCallback,
-  useCallback,
-} from "./deps/preact.tsx";
+import { FunctionComponent, RefCallback } from "preact";
+import { useCallback } from "preact/hooks";
 import { useObjectURL } from "./useObjectURL.ts";
 import { FileDownload } from "./Icons.tsx";
 import { ExternalLinkAlt } from "./Icons.tsx";

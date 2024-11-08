@@ -4,7 +4,7 @@
     "api/index.ts": { "runtime": "vercel-deno@3.1.1" }
   },
   "rewrites": [{ "source": "/api/(.*)", "destination": "/api/index" }],
-  "installCommand": "curl -fsSL https://deno.land/x/install/install.sh | sh -s v1.44.4",
-  "buildCommand": "$HOME/.deno/bin/deno run -A scripts/build.ts",
+  "installCommand": "curl -fsSL https://deno.land/x/install/install.sh | sh -s v2.0.5",
+  "buildCommand": "$HOME/.deno/bin/deno task build",
   "outputDirectory": "assets"
 }

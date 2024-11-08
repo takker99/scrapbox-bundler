@@ -2,7 +2,7 @@ import "./deps/urlpattern-polyfill.ts";
 import { Reload } from "./reload.ts";
 import { BundleOptions } from "./App.tsx";
 import { isFormat } from "./isFormat.ts";
-import { isBoolean } from "./deps/unknownutil.ts";
+import { isBoolean } from "@core/unknownutil/is/boolean";
 
 export interface ParamOptions extends BundleOptions {
   templateURL?: URL;
