@@ -16,6 +16,7 @@
     "jsr:@std/path@^1.0.8": "1.0.8",
     "jsr:@std/regexp@1": "1.0.0",
     "jsr:@std/semver@1": "1.0.3",
+    "jsr:@takker/esbuild-wasm-no-blob@0.24": "0.24.0",
     "npm:date-fns@^4.1.0": "4.1.0",
     "npm:esbuild@0.24": "0.24.0",
     "npm:option-t@50": "50.0.0",
@@ -76,6 +77,9 @@
     },
     "@std/semver@1.0.3": {
       "integrity": "7c139c6076a080eeaa4252c78b95ca5302818d7eafab0470d34cafd9930c13c8"
+    },
+    "@takker/esbuild-wasm-no-blob@0.24.0": {
+      "integrity": "bd2759316cedf971addcea7cfba27dd7b0b66d28877fba6088ee2b3ea7799be6"
     }
   },
   "npm": {
@@ -228,6 +232,7 @@
       "jsr:@std/bytes@^1.0.3",
       "jsr:@std/path@^1.0.8",
       "jsr:@std/regexp@1",
+      "jsr:@takker/esbuild-wasm-no-blob@0.24",
       "npm:date-fns@^4.1.0",
       "npm:esbuild@0.24",
       "npm:option-t@50",

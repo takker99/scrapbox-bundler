@@ -17,6 +17,7 @@
     "@std/bytes": "jsr:@std/bytes@^1.0.3",
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/regexp": "jsr:@std/regexp@^1.0.0",
+    "@takker/esbuild-wasm-no-blob": "jsr:@takker/esbuild-wasm-no-blob@^0.24.0",
     "date-fns": "npm:date-fns@^4.1.0",
     "esbuild": "npm:esbuild@^0.24.0",
     "option-t": "npm:option-t@^50.0.0",

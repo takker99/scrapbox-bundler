@@ -1,6 +1,6 @@
 import { createOk, isErr, unwrapOk } from "option-t/plain_result";
 import { RobustFetch, robustFetch } from "./deps/remoteLoader.ts";
-import { version } from "./deps/esbuild-wasm.ts";
+import { version } from "@takker/esbuild-wasm-no-blob";
 
 // Clear caches when the version changes
 (async () => {
