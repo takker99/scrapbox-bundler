@@ -1,0 +1,238 @@
+{
+  "version": "4",
+  "specifiers": {
+    "jsr:@core/unknownutil@^4.3.0": "4.3.0",
+    "jsr:@cosense/types@~0.10.1": "0.10.1",
+    "jsr:@luca/esbuild-deno-loader@0.10": "0.10.3",
+    "jsr:@luca/esbuild-deno-loader@~0.10.3": "0.10.3",
+    "jsr:@std/assert@^1.0.7": "1.0.7",
+    "jsr:@std/assert@~0.213.1": "0.213.1",
+    "jsr:@std/encoding@0.213": "0.213.1",
+    "jsr:@std/internal@^1.0.5": "1.0.5",
+    "jsr:@std/json@~0.213.1": "0.213.1",
+    "jsr:@std/jsonc@0.213": "0.213.1",
+    "jsr:@std/path@0.213": "0.213.1",
+    "jsr:@std/path@1": "1.0.8",
+    "jsr:@std/path@^1.0.8": "1.0.8",
+    "jsr:@std/regexp@1": "1.0.0",
+    "jsr:@std/semver@1": "1.0.3",
+    "npm:date-fns@^4.1.0": "4.1.0",
+    "npm:esbuild@0.24": "0.24.0",
+    "npm:option-t@50": "50.0.0",
+    "npm:preact@10": "10.24.3",
+    "npm:preact@^10.24.3": "10.24.3"
+  },
+  "jsr": {
+    "@core/unknownutil@4.3.0": {
+      "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
+    },
+    "@cosense/types@0.10.1": {
+      "integrity": "13d2488a02c7b0b035a265bc3299affbdab1ea5b607516379685965cd37b2058"
+    },
+    "@luca/esbuild-deno-loader@0.10.3": {
+      "integrity": "32fc93f7e7f78060234fd5929a740668aab1c742b808c6048b57f9aaea514921",
+      "dependencies": [
+        "jsr:@std/encoding",
+        "jsr:@std/jsonc",
+        "jsr:@std/path@0.213"
+      ]
+    },
+    "@std/assert@0.213.1": {
+      "integrity": "24c28178b30c8e0782c18e8e94ea72b16282207569cdd10ffb9d1d26f2edebfe"
+    },
+    "@std/assert@1.0.7": {
+      "integrity": "64ce9fac879e0b9f3042a89b3c3f8ccfc9c984391af19e2087513a79d73e28c3",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/encoding@0.213.1": {
+      "integrity": "fcbb6928713dde941a18ca5db88ca1544d0755ec8fb20fe61e2dc8144b390c62"
+    },
+    "@std/internal@1.0.5": {
+      "integrity": "54a546004f769c1ac9e025abd15a76b6671ddc9687e2313b67376125650dc7ba"
+    },
+    "@std/json@0.213.1": {
+      "integrity": "f572b1de605d07c4a5602445dac54bfc51b1fb87a3710a17aed2608bfca54e68"
+    },
+    "@std/jsonc@0.213.1": {
+      "integrity": "5578f21aa583b7eb7317eed077ffcde47b294f1056bdbb9aacec407758637bfe",
+      "dependencies": [
+        "jsr:@std/assert@~0.213.1",
+        "jsr:@std/json"
+      ]
+    },
+    "@std/path@0.213.1": {
+      "integrity": "f187bf278a172752e02fcbacf6bd78a335ed320d080a7ed3a5a59c3e88abc673",
+      "dependencies": [
+        "jsr:@std/assert@~0.213.1"
+      ]
+    },
+    "@std/path@1.0.8": {
+      "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
+    },
+    "@std/regexp@1.0.0": {
+      "integrity": "158628d134c49a0858afe05017c4666f5f73d3a56602c346549ca42f3fab244a"
+    },
+    "@std/semver@1.0.3": {
+      "integrity": "7c139c6076a080eeaa4252c78b95ca5302818d7eafab0470d34cafd9930c13c8"
+    }
+  },
+  "npm": {
+    "@esbuild/aix-ppc64@0.24.0": {
+      "integrity": "sha512-WtKdFM7ls47zkKHFVzMz8opM7LkcsIp9amDUBIAWirg70RM71WRSjdILPsY5Uv1D42ZpUfaPILDlfactHgsRkw=="
+    },
+    "@esbuild/android-arm64@0.24.0": {
+      "integrity": "sha512-Vsm497xFM7tTIPYK9bNTYJyF/lsP590Qc1WxJdlB6ljCbdZKU9SY8i7+Iin4kyhV/KV5J2rOKsBQbB77Ab7L/w=="
+    },
+    "@esbuild/android-arm@0.24.0": {
+      "integrity": "sha512-arAtTPo76fJ/ICkXWetLCc9EwEHKaeya4vMrReVlEIUCAUncH7M4bhMQ+M9Vf+FFOZJdTNMXNBrWwW+OXWpSew=="
+    },
+    "@esbuild/android-x64@0.24.0": {
+      "integrity": "sha512-t8GrvnFkiIY7pa7mMgJd7p8p8qqYIz1NYiAoKc75Zyv73L3DZW++oYMSHPRarcotTKuSs6m3hTOa5CKHaS02TQ=="
+    },
+    "@esbuild/darwin-arm64@0.24.0": {
+      "integrity": "sha512-CKyDpRbK1hXwv79soeTJNHb5EiG6ct3efd/FTPdzOWdbZZfGhpbcqIpiD0+vwmpu0wTIL97ZRPZu8vUt46nBSw=="
+    },
+    "@esbuild/darwin-x64@0.24.0": {
+      "integrity": "sha512-rgtz6flkVkh58od4PwTRqxbKH9cOjaXCMZgWD905JOzjFKW+7EiUObfd/Kav+A6Gyud6WZk9w+xu6QLytdi2OA=="
+    },
+    "@esbuild/freebsd-arm64@0.24.0": {
+      "integrity": "sha512-6Mtdq5nHggwfDNLAHkPlyLBpE5L6hwsuXZX8XNmHno9JuL2+bg2BX5tRkwjyfn6sKbxZTq68suOjgWqCicvPXA=="
+    },
+    "@esbuild/freebsd-x64@0.24.0": {
+      "integrity": "sha512-D3H+xh3/zphoX8ck4S2RxKR6gHlHDXXzOf6f/9dbFt/NRBDIE33+cVa49Kil4WUjxMGW0ZIYBYtaGCa2+OsQwQ=="
+    },
+    "@esbuild/linux-arm64@0.24.0": {
+      "integrity": "sha512-TDijPXTOeE3eaMkRYpcy3LarIg13dS9wWHRdwYRnzlwlA370rNdZqbcp0WTyyV/k2zSxfko52+C7jU5F9Tfj1g=="
+    },
+    "@esbuild/linux-arm@0.24.0": {
+      "integrity": "sha512-gJKIi2IjRo5G6Glxb8d3DzYXlxdEj2NlkixPsqePSZMhLudqPhtZ4BUrpIuTjJYXxvF9njql+vRjB2oaC9XpBw=="
+    },
+    "@esbuild/linux-ia32@0.24.0": {
+      "integrity": "sha512-K40ip1LAcA0byL05TbCQ4yJ4swvnbzHscRmUilrmP9Am7//0UjPreh4lpYzvThT2Quw66MhjG//20mrufm40mA=="
+    },
+    "@esbuild/linux-loong64@0.24.0": {
+      "integrity": "sha512-0mswrYP/9ai+CU0BzBfPMZ8RVm3RGAN/lmOMgW4aFUSOQBjA31UP8Mr6DDhWSuMwj7jaWOT0p0WoZ6jeHhrD7g=="
+    },
+    "@esbuild/linux-mips64el@0.24.0": {
+      "integrity": "sha512-hIKvXm0/3w/5+RDtCJeXqMZGkI2s4oMUGj3/jM0QzhgIASWrGO5/RlzAzm5nNh/awHE0A19h/CvHQe6FaBNrRA=="
+    },
+    "@esbuild/linux-ppc64@0.24.0": {
+      "integrity": "sha512-HcZh5BNq0aC52UoocJxaKORfFODWXZxtBaaZNuN3PUX3MoDsChsZqopzi5UupRhPHSEHotoiptqikjN/B77mYQ=="
+    },
+    "@esbuild/linux-riscv64@0.24.0": {
+      "integrity": "sha512-bEh7dMn/h3QxeR2KTy1DUszQjUrIHPZKyO6aN1X4BCnhfYhuQqedHaa5MxSQA/06j3GpiIlFGSsy1c7Gf9padw=="
+    },
+    "@esbuild/linux-s390x@0.24.0": {
+      "integrity": "sha512-ZcQ6+qRkw1UcZGPyrCiHHkmBaj9SiCD8Oqd556HldP+QlpUIe2Wgn3ehQGVoPOvZvtHm8HPx+bH20c9pvbkX3g=="
+    },
+    "@esbuild/linux-x64@0.24.0": {
+      "integrity": "sha512-vbutsFqQ+foy3wSSbmjBXXIJ6PL3scghJoM8zCL142cGaZKAdCZHyf+Bpu/MmX9zT9Q0zFBVKb36Ma5Fzfa8xA=="
+    },
+    "@esbuild/netbsd-x64@0.24.0": {
+      "integrity": "sha512-hjQ0R/ulkO8fCYFsG0FZoH+pWgTTDreqpqY7UnQntnaKv95uP5iW3+dChxnx7C3trQQU40S+OgWhUVwCjVFLvg=="
+    },
+    "@esbuild/openbsd-arm64@0.24.0": {
+      "integrity": "sha512-MD9uzzkPQbYehwcN583yx3Tu5M8EIoTD+tUgKF982WYL9Pf5rKy9ltgD0eUgs8pvKnmizxjXZyLt0z6DC3rRXg=="
+    },
+    "@esbuild/openbsd-x64@0.24.0": {
+      "integrity": "sha512-4ir0aY1NGUhIC1hdoCzr1+5b43mw99uNwVzhIq1OY3QcEwPDO3B7WNXBzaKY5Nsf1+N11i1eOfFcq+D/gOS15Q=="
+    },
+    "@esbuild/sunos-x64@0.24.0": {
+      "integrity": "sha512-jVzdzsbM5xrotH+W5f1s+JtUy1UWgjU0Cf4wMvffTB8m6wP5/kx0KiaLHlbJO+dMgtxKV8RQ/JvtlFcdZ1zCPA=="
+    },
+    "@esbuild/win32-arm64@0.24.0": {
+      "integrity": "sha512-iKc8GAslzRpBytO2/aN3d2yb2z8XTVfNV0PjGlCxKo5SgWmNXx82I/Q3aG1tFfS+A2igVCY97TJ8tnYwpUWLCA=="
+    },
+    "@esbuild/win32-ia32@0.24.0": {
+      "integrity": "sha512-vQW36KZolfIudCcTnaTpmLQ24Ha1RjygBo39/aLkM2kmjkWmZGEJ5Gn9l5/7tzXA42QGIoWbICfg6KLLkIw6yw=="
+    },
+    "@esbuild/win32-x64@0.24.0": {
+      "integrity": "sha512-7IAFPrjSQIJrGsK6flwg7NFmwBoSTyF3rl7If0hNUFQU4ilTsEPL6GuMuU9BfIWVVGuRnuIidkSMC+c0Otu8IA=="
+    },
+    "date-fns@4.1.0": {
+      "integrity": "sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg=="
+    },
+    "esbuild@0.24.0": {
+      "integrity": "sha512-FuLPevChGDshgSicjisSooU0cemp/sGXR841D5LHMB7mTVOmsEHcAxaH3irL53+8YDIeVNQEySh4DaYU/iuPqQ==",
+      "dependencies": [
+        "@esbuild/aix-ppc64",
+        "@esbuild/android-arm",
+        "@esbuild/android-arm64",
+        "@esbuild/android-x64",
+        "@esbuild/darwin-arm64",
+        "@esbuild/darwin-x64",
+        "@esbuild/freebsd-arm64",
+        "@esbuild/freebsd-x64",
+        "@esbuild/linux-arm",
+        "@esbuild/linux-arm64",
+        "@esbuild/linux-ia32",
+        "@esbuild/linux-loong64",
+        "@esbuild/linux-mips64el",
+        "@esbuild/linux-ppc64",
+        "@esbuild/linux-riscv64",
+        "@esbuild/linux-s390x",
+        "@esbuild/linux-x64",
+        "@esbuild/netbsd-x64",
+        "@esbuild/openbsd-arm64",
+        "@esbuild/openbsd-x64",
+        "@esbuild/sunos-x64",
+        "@esbuild/win32-arm64",
+        "@esbuild/win32-ia32",
+        "@esbuild/win32-x64"
+      ]
+    },
+    "option-t@50.0.0": {
+      "integrity": "sha512-zHw9Et+SfAx3Xtl9LagyAjyyzC3pNONEinTAOmZN2IKL0dYa6dthjzwuSRueJ2gLkaTiinQjRDGo/1mKSl70hg=="
+    },
+    "preact@10.24.3": {
+      "integrity": "sha512-Z2dPnBnMUfyQfSQ+GBdsGa16hz35YmLmtTLhM169uW944hYL6xzTYkJjC07j+Wosz733pMWx0fgON3JNw1jJQA=="
+    }
+  },
+  "remote": {
+    "https://esm.sh/urlpattern-polyfill@10.0.0?no-check": "0ce4f50fdc654ad20a87343589d23f97800106cb3fcae4965dc4005c461e126d",
+    "https://esm.sh/v135/urlpattern-polyfill@10.0.0/denonext/urlpattern-polyfill.mjs": "b4c1376bf78453a21c3b41e54a26c73a2d0d273ea79826b0c9ac3acf6b8f33a4",
+    "https://esm.sh/v135/urlpattern-polyfill@10.0.0/denonext/urlpattern.js": "e3bc87a3be6e6a707c1c173ff20951ef2839a5ef7b7d385b608d3f2a8bbfd167",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.2/deps/urlpattern-polyfill.ts": "5e8f4693d0a64e245deb30c66873b5f9a1e1d49a00daad20438bd190fda05f23",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.2/toDataURL.ts": "f23082405390534da95b7858c9536d2920ec2a1e479d56886e9bd5fe7ea05250",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/deno-mock.js": "bfb36f7cec1c054868de958cc7cd4e324ae698f59c7cd59c0fe930011b7a7ffb",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/esbuild-wasm.ts": "a3d6b15f5d29fcfafec05f4e817416e9de15c84a5c96dfbbc5b5e9257c5b9c82",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/esbuild_deno_loader.ts": "102b9076541246e92296eebafbfee16dd4282ec631a2b22d4191744a32372f31",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/option-t.ts": "0ce996eb5091ed894c29132dcb29f90e9edde0a6e3dcae7018e7a0f3c81b3166",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/path.ts": "63e625d44302c54c7a0f5fd1e3e60e20f347651f085c1dc65cff38c7aa478053",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/deps/semver.ts": "99d70a8634e578b5ea26785e81cc5644199f020c935966d89ab84bf5a45310a0",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/esbuildResolution.ts": "43c08d634d9deac0441609135a5fa75f57dc7750f31415aa420b31418290f561",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/extractSourceMapURL.ts": "3d98159c39bca1f97f1bc5c7dddd52d5b621318e31448e42820e1517bceabb70",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/getJsrPackageMetadata.ts": "ef1faa607fd529fedbea86d28ea36ad4dfe3a6f6bd21a0b26caa287933806940",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/getJsrPackageVersionMetadata.ts": "69d2c59a50979954957b13d3c9d787230990a657767b779647c0b8e7ad01a8bb",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/getNpmPackageMetadata.ts": "5d09ad804eb45e8ed7f2e0477cf929d3e0022adbe4d65cea8d78892f61c0355f",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/loader.ts": "024361291bfb7d9ee32eacfc1f44f27532835efd010b5bb416f860bf88fa020f",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/remoteLoader.ts": "7a5cb840cabc698bf4b5b1c65b4052b8d91b7a180c8f8104c0a96d520b1f7cdb",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/resolve.ts": "c9299e3e599000ae78365825ef12b4882e37873686e9b62e0043738a9304a2a1",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/robustFetch.ts": "755af9fd86af5d07926ba87342c20bba651deedec65ebe044812b3f6de1df8b0",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/specifiers.ts": "eaf519a4549b68250a8537920aab540d3cf39849836c97cd6f2668926d0c8dc8",
+    "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/toDataURL.ts": "f23082405390534da95b7858c9536d2920ec2a1e479d56886e9bd5fe7ea05250",
+    "https://raw.githubusercontent.com/takker99/esbuild-wasm-no-blob/0.23.0/common.ts": "cc5da746a610bac9a958b263894314e15458cadfffee3e92ad2b9f59d0ead49e",
+    "https://raw.githubusercontent.com/takker99/esbuild-wasm-no-blob/0.23.0/mod.ts": "be014901d8a66b2fbb5b8ff5304953520fc466db935958bd7f317caefd80b9d0",
+    "https://raw.githubusercontent.com/takker99/esbuild-wasm-no-blob/0.23.0/stdio_protocol.ts": "7f41e8fc04649d84d055889e2b4b0d55b0372d85e608ffe6b8620ccccb9764d0",
+    "https://raw.githubusercontent.com/takker99/esbuild-wasm-no-blob/0.23.0/types.ts": "d8706beb586cf416545aeb492f9ba5cca5e6c3bf894caabf754e408aa9d6a2b6",
+    "https://raw.githubusercontent.com/takker99/esbuild-wasm-no-blob/0.23.0/version.ts": "85c58b6210e39222a81253273e15bcc76ccc3fe162fc2d888f2b1fe2fddd3a4e"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@core/unknownutil@^4.3.0",
+      "jsr:@cosense/types@~0.10.1",
+      "jsr:@luca/esbuild-deno-loader@~0.10.3",
+      "jsr:@std/assert@^1.0.7",
+      "jsr:@std/bytes@^1.0.3",
+      "jsr:@std/path@^1.0.8",
+      "jsr:@std/regexp@1",
+      "npm:date-fns@^4.1.0",
+      "npm:esbuild@0.24",
+      "npm:option-t@50",
+      "npm:preact@10",
+      "npm:preact@^10.24.3"
+    ]
+  }
+}

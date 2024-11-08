@@ -1,8 +1,8 @@
-import { getUnixTime } from "https://esm.sh/v135/date-fns@3.4.0/getUnixTime.mjs";
+import { getUnixTime } from "date-fns/getUnixTime";
 import { fetch } from "./fetch.ts";
-import { ImportedData } from "./deps/scrapbox.ts";
-import { escape } from "./deps/regexp.ts";
-import { createOk, isErr, Result, unwrapOk } from "./deps/option-t.ts";
+import { ImportedData } from "@cosense/types/rest";
+import { escape } from "@std/regexp";
+import { createOk, isErr, Result, unwrapOk } from "option-t/plain_result";
 import { AbortError, HTTPError, NetworkError } from "./deps/remoteLoader.ts";
 import { preferReload, Reload } from "./reload.ts";
 

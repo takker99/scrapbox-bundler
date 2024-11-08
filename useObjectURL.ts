@@ -1,4 +1,4 @@
-import { useReducer } from "./deps/preact.tsx";
+import { useReducer } from "preact/hooks";
 
 /** Returns a URL representing the given Blob or File object.  */
 export const useObjectURL = (blob: Blob): string => {

@@ -1,86 +1,85 @@
 .fa-spinner {
-    animation: spin 2s infinite linear
+  animation: spin 2s infinite linear;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg)
-    }
+  from {
+    transform: rotate(0deg);
+  }
 
-    to {
-        transform: rotate(359deg)
-    }
+  to {
+    transform: rotate(359deg);
+  }
 }
 
 :root {
-    color-scheme: light dark;
-    background-color: Canvas;
-    color: CanvasText;
+  color-scheme: light dark;
+  background-color: Canvas;
+  color: CanvasText;
 }
 
 #app {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    margin: 0 2em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin: 0 2em;
 
-    >* {
-        flex: 0 1 min-content;
-        margin: unset;
+  > * {
+    flex: 0 1 min-content;
+    margin: unset;
+  }
+
+  .metafile {
+    width: fit-content;
+  }
+
+  .build-result {
+    display: grid;
+    grid-template:
+      "title copy open download ." 24px
+      "code  code code code      code" minmax(10vh, 1fr) /
+      auto auto min(100%, 24px) min(100%, 24px) auto;
+    gap: 0.5rem;
+    overflow: hidden;
+    flex: auto;
+    max-height: 80vh;
+
+    button {
+      cursor: pointer;
+      background: unset;
+      color: unset;
+      border: unset;
     }
 
-    .metafile {
-        width: fit-content
+    pre {
+      margin: unset;
     }
 
-    .build-result {
-        display: grid;
-        grid-template:
-            "title copy open download ." 24px
-            "code  code code code      code" minmax(10vh, 1fr) /
-            auto auto min(100%, 24px) min(100%, 24px) auto;
-        gap: 0.5rem;
-        overflow: hidden;
-        flex: auto;
-        max-height: 80vh;
-
-        button {
-            cursor: pointer;
-            background: unset;
-            color: unset;
-            border: unset;
-        }
-
-        pre {
-            margin: unset;
-        }
-
-
-        .title {
-            grid-area: title;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-        }
-
-        .open-new-tab {
-            grid-area: open;
-        }
-
-        .download {
-            grid-area: download;
-        }
-
-        .code {
-            grid-area: code;
-            overflow-y: auto;
-
-            padding: 9px;
-            border: 1px solid ButtonBorder;
-            border-radius: 4px;
-
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            min-height: 0;
-        }
+    .title {
+      grid-area: title;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
     }
+
+    .open-new-tab {
+      grid-area: open;
+    }
+
+    .download {
+      grid-area: download;
+    }
+
+    .code {
+      grid-area: code;
+      overflow-y: auto;
+
+      padding: 9px;
+      border: 1px solid ButtonBorder;
+      border-radius: 4px;
+
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      min-height: 0;
+    }
+  }
 }

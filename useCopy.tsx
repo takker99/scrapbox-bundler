@@ -1,10 +1,5 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-/** @jsx h */
-/** @jsxFrag Fragment */
-
-import { Fragment, h, useCallback, useState } from "./deps/preact.tsx";
+import type { h } from "preact";
+import { useCallback, useState } from "preact/hooks";
 import { CheckCircle, Copy as CopyIcon } from "./Icons.tsx";
 
 export const useCopy = (blob: Blob): {

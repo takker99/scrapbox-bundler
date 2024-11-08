@@ -1,0 +1,41 @@
+{
+  "tasks": {
+    "fix": "deno fmt && deno lint --fix && deno check --remote *.ts *.tsx scripts/*.ts && deno test --allow-read=./ --doc --parallel --shuffle",
+    "check": "deno fmt --check && deno lint && deno check --remote *.ts *.tsx scripts/*.ts && deno test --allow-read=./ --doc --parallel --shuffle",
+    "coverage": "deno test --allow-read=./ --parallel --shuffle --coverage && deno coverage --html",
+    // from https://github.com/jsr-core/unknownutil/blob/v4.2.2/deno.jsonc#L84-L85
+    "update": "deno run --allow-env --allow-read --allow-write=. --allow-run=git,deno --allow-net=jsr.io,registry.npmjs.org jsr:@molt/cli",
+    "update:commit": "deno task -q update --commit --prefix deps: --pre-commit=fix",
+    "build": "deno run -A scripts/build.ts",
+    "dev": "vercel dev"
+  },
+  "imports": {
+    "@core/unknownutil": "jsr:@core/unknownutil@^4.3.0",
+    "@cosense/types": "jsr:@cosense/types@^0.10.1",
+    "@luca/esbuild-deno-loader": "jsr:@luca/esbuild-deno-loader@^0.10.3",
+    "@std/assert": "jsr:@std/assert@^1.0.7",
+    "@std/bytes": "jsr:@std/bytes@^1.0.3",
+    "@std/path": "jsr:@std/path@^1.0.8",
+    "@std/regexp": "jsr:@std/regexp@^1.0.0",
+    "date-fns": "npm:date-fns@^4.1.0",
+    "esbuild": "npm:esbuild@^0.24.0",
+    "option-t": "npm:option-t@^50.0.0",
+    "preact": "npm:preact@^10.24.3",
+    "react": "npm:preact@10",
+    "react/": "npm:preact@10/",
+    "scrap-juptyer/": "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/"
+  },
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "esnext",
+      "dom",
+      "dom.iterable"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "npm:preact@10"
+  },
+  "exclude": [
+    ".vercel/"
+  ]
+}

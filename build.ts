@@ -1,8 +1,3 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-/// <reference lib="dom.iterable" />
-/// <reference lib="deno.ns" />
 import { build as esbuild, BuildOptions } from "./deps/esbuild-wasm.ts";
 import {
   remoteLoader,

@@ -1,27 +1,27 @@
-import { build, denoPlugins, stop } from "../deps/esbuild.ts";
+import { denoPlugins } from "@luca/esbuild-deno-loader";
+import { fromFileUrl } from "@std/path/from-file-url";
+import { build, stop } from "esbuild";
 
-const result = await build({
-  entryPoints: [
-    new URL("../App.tsx", import.meta.url).href,
-    new URL("../deps/worker.ts", import.meta.url).href,
-  ],
+await build({
+  entryPoints: {
+    "index": new URL("../App.tsx", import.meta.url).href,
+    "worker": new URL("../deps/worker.ts", import.meta.url).href,
+  },
   bundle: true,
   minify: true,
   format: "esm",
   outdir: "assets",
-  write: false,
   banner: {
     js: "// deno-lint-ignore-file\n// deno-fmt-ignore-file",
   },
-  plugins: [...denoPlugins()],
+  jsx: "automatic",
+  jsxImportSource: "npm:preact@10",
+  sourcemap: "linked",
+  plugins: [
+    ...denoPlugins({
+      configPath: fromFileUrl(new URL("../deno.jsonc", import.meta.url)),
+    }),
+  ],
 });
 
-await Deno.writeTextFile(
-  new URL("../assets/index.js", import.meta.url),
-  result.outputFiles[0].text,
-);
-await Deno.writeTextFile(
-  new URL("../assets/worker.js", import.meta.url),
-  result.outputFiles[1].text,
-);
 await stop();

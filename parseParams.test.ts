@@ -1,7 +1,5 @@
-/// <reference lib="deno.ns" />
-
 import { parseDefine } from "./parseParams.ts";
-import { assertEquals } from "./deps/testing.ts";
+import { assertEquals } from "@std/assert/equals";
 
 Deno.test("parseDefine", () => {
   assertEquals(parseDefine([]), {});
