@@ -6,7 +6,7 @@
     // from https://github.com/jsr-core/unknownutil/blob/v4.2.2/deno.jsonc#L84-L85
     "update": "deno run --allow-env --allow-read --allow-write=. --allow-run=git,deno --allow-net=jsr.io,registry.npmjs.org jsr:@molt/cli",
     "update:commit": "deno task -q update --commit --prefix deps: --pre-commit=fix",
-    "build": "deno run -A scripts/build.ts",
+    "build": "deno run -A scripts/build.ts && rm deno.lock",
     "dev": "vercel dev"
   },
   "imports": {
@@ -23,7 +23,7 @@
     "preact": "npm:preact@^10.24.3",
     "react": "npm:preact@10",
     "react/": "npm:preact@10/",
-    "scrap-juptyer/": "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.3/"
+    "scrap-juptyer/": "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.4/"
   },
   "compilerOptions": {
     "lib": [
