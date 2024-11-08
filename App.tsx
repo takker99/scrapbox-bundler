@@ -9,7 +9,7 @@ import {
   Loader,
   Message,
   Metafile,
-} from "./deps/esbuild-wasm.ts";
+} from "@takker/esbuild-wasm-no-blob";
 import { fetch } from "./fetch.ts";
 import { ChartPie, CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
 import { BuildResult } from "./BuildResult.tsx";
@@ -35,8 +35,8 @@ const { templateURL, ...initialOptions } = parseSearchParams(
   if (isErr(result)) throw Error("Failed to fetch esbuild.wasm.");
 
   await initialize({
-    workerURL: "./worker.js",
-    wasmModule: await WebAssembly.compileStreaming(unwrapOk(result)[0]),
+    worker: "./worker.js",
+    wasm: await WebAssembly.compileStreaming(unwrapOk(result)[0]),
   });
 }
 

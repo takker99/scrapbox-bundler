@@ -1,4 +1,4 @@
-import { Loader } from "./deps/esbuild-wasm.ts";
+import { Loader } from "@takker/esbuild-wasm-no-blob";
 
 export const mimeType = (loader: Loader): string => {
   switch (loader) {

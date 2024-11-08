@@ -1,4 +1,4 @@
-import { build as esbuild, BuildOptions } from "./deps/esbuild-wasm.ts";
+import { build as esbuild, BuildOptions } from "@takker/esbuild-wasm-no-blob";
 import {
   remoteLoader,
   RemoteLoaderInit,
@@ -18,12 +18,16 @@ export interface BuildInit
 export const build = (init: BuildInit) => {
   const { onProgress, importMapURL, reload, ...params } = init;
 
-  return esbuild({
+  return esbuild<
+    Omit<BuildOptions, "write" | "metafile"> & { write: false; metafile: true }
+  >({
     ...params,
     write: false,
     metafile: true,
     plugins: [
+      //@ts-ignore - esbuild types are not up to date
       resolver({ importMapURL }),
+      //@ts-ignore - esbuild types are not up to date
       remoteLoader({
         fetch,
         reload,
