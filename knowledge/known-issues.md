@@ -10,7 +10,7 @@ Scrapboxのメモおよびソースコード調査から抽出した、未解決
 
 **出典**: `/takker/scrapbox-bundler` バグセクション
 
-**Status**: Fixed in PR #[number] (2026-02-15)
+**Status**: Fixed (2026-02-15)
 
 **Previous issue**: CSSファイルをbuildした際に、loader判定が`.css`ではなく`.txt`（text）として扱われるケースがあった。
 
@@ -98,7 +98,7 @@ raw URLから直接importしている。
 
 ```typescript
 // deps/remoteLoader.ts
-export * from "scrap-juptyer/remoteLoader.ts"; // deno.jsonc経由でGitHub rawに解決
+export * from "scrap-jupyter/remoteLoader.ts"; // deno.jsonc経由でGitHub rawに解決
 ```
 
 ScrapJupyterのバージョン (`v1.7.4` / `v1.7.2`)

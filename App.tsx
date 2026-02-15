@@ -88,10 +88,15 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
       // This allows us to look up the original extension even after restoreEntryPointURL strips it
       const entryPointExtensions = new Map(
         entryPoints.map((url) => {
-          const ext = pathExtname(url);
-          // Remove the extension to create the key that matches the restored URL
-          const urlWithoutExt = ext ? url.slice(0, -ext.length) : url;
-          return [urlWithoutExt, ext];
+          const parsedURL = new URL(url);
+          const ext = pathExtname(parsedURL.pathname);
+          // Remove extension from pathname, and clear search/hash to match restoreEntryPointURL behavior
+          if (ext) {
+            parsedURL.pathname = parsedURL.pathname.slice(0, -ext.length);
+          }
+          parsedURL.search = "";
+          parsedURL.hash = "";
+          return [parsedURL.href, ext];
         })
       );
       

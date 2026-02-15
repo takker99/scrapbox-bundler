@@ -145,3 +145,39 @@ Deno.test("CSS file with missing output extension - uses fallback", () => {
   assertEquals(ext, ".css"); // Should use .css not .txt
   assertEquals(fileName, "https://example.com/custom-style.css");
 });
+
+Deno.test("URL with query parameters - extension handling", () => {
+  // Test that URLs with query parameters are handled correctly
+  // Entry point: https://example.com/module.ts?v=1
+  // After restoring and removing query: https://example.com/module
+  const filePath = "/https:/example.com/module.ts.js";
+  const loaderMap = new Map();
+  // Key should be URL without extension AND without query params
+  const entryPointExtensions = new Map([["https://example.com/module", ".ts"]]);
+  
+  const url = restoreEntryPointURL(filePath);
+  const outputExt = pathExtname(filePath);
+  
+  let loader = loaderFromExtension(outputExt);
+  if (!loader) {
+    loader = loaderMap.get(url);
+  }
+  if (!loader) {
+    const originalExt = entryPointExtensions.get(url);
+    if (originalExt) {
+      loader = loaderFromExtension(originalExt);
+    }
+  }
+  if (!loader) {
+    loader = "text";
+  }
+  
+  const ext = outputExt === "" ? extname(loader) : outputExt;
+  const fileName = replaceExtension(url, ext);
+  
+  assertEquals(url, "https://example.com/module");
+  assertEquals(outputExt, ".js");
+  assertEquals(loader, "js");
+  assertEquals(ext, ".js");
+  assertEquals(fileName, "https://example.com/module.js");
+});
