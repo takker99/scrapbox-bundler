@@ -84,9 +84,15 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
     (async () => {
       const { entryPoints, importMapURL, ...params } = options;
       const loaderMap = new Map<string, Loader>();
-      // Create a map from entry point URLs to their original extensions for fallback
+      // Create a map from entry point URLs (without extension) to their original extensions for fallback
+      // This allows us to look up the original extension even after restoreEntryPointURL strips it
       const entryPointExtensions = new Map(
-        entryPoints.map((url) => [url, pathExtname(url)])
+        entryPoints.map((url) => {
+          const ext = pathExtname(url);
+          // Remove the extension to create the key that matches the restored URL
+          const urlWithoutExt = ext ? url.slice(0, -ext.length) : url;
+          return [urlWithoutExt, ext];
+        })
       );
       
       try {

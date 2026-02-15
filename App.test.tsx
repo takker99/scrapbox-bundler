@@ -30,7 +30,8 @@ Deno.test("CSS file processing - normal case", () => {
 Deno.test("CSS file processing - missing loaderMap entry", () => {
   const filePath = "/https:/example.com/style.css";
   const loaderMap = new Map(); // Empty - simulating missing entry
-  const entryPointExtensions = new Map([["https://example.com/style.css", ".css"]]);
+  // Key should be URL without extension to match restored URL
+  const entryPointExtensions = new Map([["https://example.com/style", ".css"]]);
   
   const url = restoreEntryPointURL(filePath);
   const outputExt = pathExtname(filePath);
