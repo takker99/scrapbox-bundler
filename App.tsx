@@ -85,17 +85,18 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
       const { entryPoints, importMapURL, ...params } = options;
       const loaderMap = new Map<string, Loader>();
       // Create a map from entry point URLs (without extension) to their original extensions for fallback
-      // This allows us to look up the original extension even after restoreEntryPointURL strips it
+      // This replicates the logic of restoreEntryPointURL to ensure keys match
       const entryPointExtensions = new Map(
         entryPoints.map((url) => {
           const parsedURL = new URL(url);
-          const ext = pathExtname(parsedURL.pathname);
-          // Remove extension from pathname, and clear search/hash to match restoreEntryPointURL behavior
+          parsedURL.search = "";
+          parsedURL.hash = "";
+          // Use extname on href like restoreEntryPointURL does
+          const ext = pathExtname(parsedURL.href);
+          // Remove extension from pathname like restoreEntryPointURL does
           if (ext) {
             parsedURL.pathname = parsedURL.pathname.slice(0, -ext.length);
           }
-          parsedURL.search = "";
-          parsedURL.hash = "";
           return [parsedURL.href, ext];
         })
       );
@@ -233,8 +234,8 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             <p>
               <strong>{state.errors.length} Errors:</strong>
               <ul>
-                {state.errors.map((error, i) => (
-                  <pre key={i}><code>{error}</code></pre>
+                {state.errors.map((error) => (
+                  <pre key={error}><code>{error}</code></pre>
                 ))}
               </ul>
             </p>
@@ -243,8 +244,8 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             <p>
               <strong>{state.warnings.length} Warnings:</strong>
               <ul>
-                {state.warnings.map((warning, i) => (
-                  <pre key={i}><code>{warning}</code></pre>
+                {state.warnings.map((warning) => (
+                  <pre key={warning}><code>{warning}</code></pre>
                 ))}
               </ul>
             </p>

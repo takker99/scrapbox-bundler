@@ -64,10 +64,27 @@ Deno.test("CSS file processing - missing loaderMap entry", () => {
 Deno.test("TypeScript file processing - double extension case", () => {
   const filePath = "/https:/example.com/module.ts.js";
   const loaderMap = new Map([["https://example.com/module.ts", "ts" as const]]);
+  // Should also have entry in entryPointExtensions for complete test
+  const entryPointExtensions = new Map([["https://example.com/module", ".ts"]]);
   
   const url = restoreEntryPointURL(filePath);
   const outputExt = pathExtname(filePath);
-  const loader = loaderFromExtension(outputExt) ?? loaderMap.get(url) ?? "text";
+  
+  // New improved logic matching App.tsx
+  let loader = loaderFromExtension(outputExt);
+  if (!loader) {
+    loader = loaderMap.get(url);
+  }
+  if (!loader) {
+    const originalExt = entryPointExtensions.get(url);
+    if (originalExt) {
+      loader = loaderFromExtension(originalExt);
+    }
+  }
+  if (!loader) {
+    loader = "text";
+  }
+  
   const ext = outputExt === "" ? extname(loader) : outputExt;
   const fileName = replaceExtension(url, ext);
   
