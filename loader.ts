@@ -1,11 +1,12 @@
-import { Loader } from "@takker/esbuild-wasm-no-blob";
+import type { Loader } from "@takker/esbuild-wasm-no-blob";
 
 export const mimeType = (loader: Loader): string => {
   switch (loader) {
     case "css":
     case "local-css":
-    case "text":
       return "text/css";
+    case "text":
+      return "text/plain";
     case "dataurl":
     case "base64":
     case "empty":
@@ -49,5 +50,31 @@ export const extname = (loader: Loader): string => {
       return ".css";
     case "text":
       return ".txt";
+  }
+};
+
+export const loaderFromExtension = (
+  extension: string,
+): Loader | undefined => {
+  switch (extension) {
+    case ".css":
+      return "css";
+    case ".js":
+    case ".mjs":
+    case ".cjs":
+      return "js";
+    case ".jsx":
+      return "jsx";
+    case ".ts":
+      return "ts";
+    case ".tsx":
+      return "tsx";
+    case ".json":
+    case ".map":
+      return "json";
+    case ".txt":
+      return "text";
+    default:
+      return undefined;
   }
 };
