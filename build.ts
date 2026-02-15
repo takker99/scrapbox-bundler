@@ -1,11 +1,14 @@
-import { build as esbuild, BuildOptions } from "@takker/esbuild-wasm-no-blob";
+import {
+  build as esbuild,
+  type BuildOptions,
+} from "@takker/esbuild-wasm-no-blob";
 import {
   remoteLoader,
-  RemoteLoaderInit,
+  type RemoteLoaderInit,
   resolver,
 } from "./deps/remoteLoader.ts";
 import { fetch } from "./fetch.ts";
-import { Reload } from "./reload.ts";
+import type { Reload } from "./reload.ts";
 
 export interface BuildInit
   extends Omit<BuildOptions, "write" | "plugins" | "metafile"> {

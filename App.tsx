@@ -1,24 +1,25 @@
-import { FunctionComponent, render } from "preact";
+import { type FunctionComponent, render } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { parseSearchParams } from "./parseParams.ts";
 import { build } from "./build.ts";
 import {
-  BuildOptions,
+  type BuildOptions,
   formatMessages,
   initialize,
-  Loader,
-  Message,
-  Metafile,
+  type Loader,
+  type Message,
+  type Metafile,
 } from "@takker/esbuild-wasm-no-blob";
 import { fetch } from "./fetch.ts";
 import { ChartPie, CheckCircle, Spinner, TimesCircle } from "./Icons.tsx";
 import { BuildResult } from "./BuildResult.tsx";
 import { applyTemplate } from "./applyTemplate.ts";
 import { restoreEntryPointURL } from "./restoreEntryPointURL.ts";
-import { extname, mimeType } from "./loader.ts";
+import { extname, loaderFromExtension, mimeType } from "./loader.ts";
+import { extname as pathExtname } from "@std/path/posix/extname";
 import { isErr, unwrapOk } from "option-t/plain_result";
 import { toDataURL } from "./deps/toDataURL.ts";
-import { preferReload, Reload } from "./reload.ts";
+import { preferReload, type Reload } from "./reload.ts";
 import { isArray } from "@core/unknownutil/is/array";
 import { isRecord } from "@core/unknownutil/is/record";
 
@@ -70,6 +71,12 @@ interface AppProp {
   templateURL?: URL;
 }
 
+const replaceExtension = (url: string, extension: string): string => {
+  if (extension === "" || url.endsWith(extension)) return url;
+  const replaced = url.replace(/\.[^/.]+$/, extension);
+  return replaced === url ? `${url}${extension}` : replaced;
+};
+
 const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
   const [state, setState] = useState<State>({ type: "building" });
 
@@ -102,13 +109,17 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
         });
         const files = new Map(buildResult.outputFiles.map((file) => {
           const url = restoreEntryPointURL(file.path);
-          const loader = loaderMap.get(url) ?? "text";
-          const ext = extname(loader);
-          const fileName = url.endsWith(ext) ? url : `${url}#${ext}`;
+          const outputExt = pathExtname(file.path);
+          const loader = loaderFromExtension(outputExt) ??
+            loaderMap.get(url) ?? "text";
+          const ext = outputExt === "" ? extname(loader) : outputExt;
+          const fileName = replaceExtension(url, ext);
 
           return [
             url,
-            new File([file.contents], fileName, { type: mimeType(loader) }),
+            new File([new Uint8Array(file.contents)], fileName, {
+              type: mimeType(loader),
+            }),
           ];
         }));
 
@@ -187,7 +198,9 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             <p>
               <strong>{state.errors.length} Errors:</strong>
               <ul>
-                {state.errors.map((error) => <pre><code>{error}</code></pre>)}
+                {state.errors.map((error, i) => (
+                  <pre key={i}><code>{error}</code></pre>
+                ))}
               </ul>
             </p>
           )}
@@ -195,8 +208,8 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             <p>
               <strong>{state.warnings.length} Warnings:</strong>
               <ul>
-                {state.warnings.map((warning) => (
-                  <pre><code>{warning}</code></pre>
+                {state.warnings.map((warning, i) => (
+                  <pre key={i}><code>{warning}</code></pre>
                 ))}
               </ul>
             </p>
@@ -217,7 +230,9 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
                 esbuild Bundle Size Analyzer
               </a>
             </p>
-            {state.files.map((file) => <BuildResult file={file} />)}
+            {state.files.map((file) => (
+              <BuildResult key={file.size} file={file} />
+            ))}
           </>
         )}
     </>
@@ -269,7 +284,12 @@ const MetafileButton: FunctionComponent<{
   }, [metafile]);
 
   return (
-    <button className="metafile" onClick={download} title="download metafile">
+    <button
+      type="button"
+      className="metafile"
+      onClick={download}
+      title="download metafile"
+    >
       {ChartPie}
       {" Download Metafile"}
     </button>

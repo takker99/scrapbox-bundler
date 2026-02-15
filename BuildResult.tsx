@@ -1,4 +1,4 @@
-import { FunctionComponent, RefCallback } from "preact";
+import type { FunctionComponent, RefCallback } from "preact";
 import { useCallback } from "preact/hooks";
 import { useObjectURL } from "./useObjectURL.ts";
 import { FileDownload } from "./Icons.tsx";
@@ -18,7 +18,12 @@ export const BuildResult: FunctionComponent<{
   return (
     <p className="build-result">
       <pre className="title"><code>{file.name}</code></pre>
-      <button className="copy" onClick={copy} title="copy the code">
+      <button
+        type="button"
+        className="copy"
+        onClick={copy}
+        title="copy the code"
+      >
         {Copy}
       </button>
       <a

@@ -1,10 +1,14 @@
 import { getUnixTime } from "date-fns/getUnixTime";
 import { fetch } from "./fetch.ts";
-import { ImportedData } from "@cosense/types/rest";
+import type { ImportedData } from "@cosense/types/rest";
 import { escape } from "@std/regexp";
-import { createOk, isErr, Result, unwrapOk } from "option-t/plain_result";
-import { AbortError, HTTPError, NetworkError } from "./deps/remoteLoader.ts";
-import { preferReload, Reload } from "./reload.ts";
+import { createOk, isErr, type Result, unwrapOk } from "option-t/plain_result";
+import type {
+  AbortError,
+  HTTPError,
+  NetworkError,
+} from "./deps/remoteLoader.ts";
+import { preferReload, type Reload } from "./reload.ts";
 
 export const applyTemplate = async (
   files: Map<string, Blob>,

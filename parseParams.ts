@@ -1,6 +1,5 @@
-import "./deps/urlpattern-polyfill.ts";
-import { Reload } from "./reload.ts";
-import { BundleOptions } from "./App.tsx";
+import type { Reload } from "./reload.ts";
+import type { BundleOptions } from "./App.tsx";
 import { isFormat } from "./isFormat.ts";
 import { isBoolean } from "@core/unknownutil/is/boolean";
 

@@ -1,4 +1,4 @@
-import { Format } from "@takker/esbuild-wasm-no-blob";
+import type { Format } from "@takker/esbuild-wasm-no-blob";
 
 const formats: Format[] = ["esm", "iife", "cjs"] as const;
 export const isFormat = (format: string): format is Format =>

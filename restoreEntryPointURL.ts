@@ -7,5 +7,5 @@ export const restoreEntryPointURL = (path: string): string => {
   tempURL.search = "";
   tempURL.hash = "";
   const pathname = tempURL.pathname.slice(0, -extname(tempURL.href).length);
-  return decodeURIComponent(new URL(pathname, tempURL.origin).href);
+  return new URL(pathname, tempURL.origin).href;
 };

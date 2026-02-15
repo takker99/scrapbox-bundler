@@ -24,7 +24,7 @@
     "preact": "npm:preact@^10.24.3",
     "react": "npm:preact@10",
     "react/": "npm:preact@10/",
-    "scrap-juptyer/": "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.4/"
+    "scrap-juptyer/": "https://raw.githubusercontent.com/takker99/ScrapJupyter/v1.7.5/"
   },
   "compilerOptions": {
     "lib": [
@@ -36,7 +36,13 @@
     "jsx": "react-jsx",
     "jsxImportSource": "npm:preact@10"
   },
+  "lint": {
+    "rules": {
+      "tags": ["jsr", "jsx", "react", "recommended"]
+    }
+  },
   "exclude": [
-    ".vercel/"
+    ".vercel/",
+    "coverage/"
   ]
 }
