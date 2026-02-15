@@ -84,6 +84,11 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
     (async () => {
       const { entryPoints, importMapURL, ...params } = options;
       const loaderMap = new Map<string, Loader>();
+      // Create a map from entry point URLs to their original extensions for fallback
+      const entryPointExtensions = new Map(
+        entryPoints.map((url) => [url, pathExtname(url)])
+      );
+      
       try {
         let dataURL: string | undefined;
         if (importMapURL) {
@@ -110,8 +115,27 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
         const files = new Map(buildResult.outputFiles.map((file) => {
           const url = restoreEntryPointURL(file.path);
           const outputExt = pathExtname(file.path);
-          const loader = loaderFromExtension(outputExt) ??
-            loaderMap.get(url) ?? "text";
+          
+          // Try multiple strategies to determine the correct loader:
+          // 1. From output extension (most reliable for known extensions)
+          // 2. From loader map (set during onProgress)
+          // 3. From original entry point extension (fallback)
+          // 4. Default to "text" as last resort
+          let loader = loaderFromExtension(outputExt);
+          if (!loader) {
+            loader = loaderMap.get(url);
+          }
+          if (!loader) {
+            const originalExt = entryPointExtensions.get(url);
+            if (originalExt) {
+              loader = loaderFromExtension(originalExt);
+            }
+          }
+          if (!loader) {
+            console.warn(`Unable to determine loader for ${url}, defaulting to "text"`);
+            loader = "text";
+          }
+          
           const ext = outputExt === "" ? extname(loader) : outputExt;
           const fileName = replaceExtension(url, ext);
 
