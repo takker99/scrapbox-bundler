@@ -141,7 +141,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
 
           return [
             url,
-            new File([new Uint8Array(file.contents)], fileName, {
+            new File([file.contents], fileName, {
               type: mimeType(loader),
             }),
           ];
@@ -255,7 +255,7 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
               </a>
             </p>
             {state.files.map((file) => (
-              <BuildResult key={file.size} file={file} />
+              <BuildResult key={file.name} file={file} />
             ))}
           </>
         )}

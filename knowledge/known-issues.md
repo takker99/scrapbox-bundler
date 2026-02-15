@@ -6,19 +6,36 @@ Scrapboxのメモおよびソースコード調査から抽出した、未解決
 
 ## 🔴 バグ（未修正）
 
-### 1. `.css`が`.txt`と認識される
+### 1. ~~`.css`が`.txt`と認識される~~ ✅ FIXED
 
 **出典**: `/takker/scrapbox-bundler` バグセクション
 
-CSSファイルをbuildした際に、loader判定が`.css`ではなく`.txt`（text）として扱われるケースがある。原因は`loader.ts`の`mimeType()`関数で`"css"`と`"text"`が同じMIMEタイプ
-`"text/css"`
-を返すことと、出力時のファイル名・loader判定のロジックに関連していると思われる。
+**Status**: Fixed in PR #[number] (2026-02-15)
 
-### 2. `.ts.js`になってしまう（出力ファイル名の問題）
+**Previous issue**: CSSファイルをbuildした際に、loader判定が`.css`ではなく`.txt`（text）として扱われるケースがあった。
+
+**Fix**: App.tsxのloader検出ロジックを改善。4段階のフォールバック戦略を実装:
+1. esbuildの出力拡張子から判定
+2. loaderMapから判定
+3. 元のエントリポイントの拡張子から判定（新規追加）
+4. "text"にデフォルト（警告付き）
+
+これにより、CSSファイルが誤って`.txt`と認識されることを防止。
+
+### 2. ~~`.ts.js`になってしまう（出力ファイル名の問題）~~ ✅ RESOLVED
 
 **出典**: `/takker/scrapbox-bundler` バグセクション
 
-TypeScriptファイルをbuildした際に、出力ファイルの拡張子が`.ts.js`のように二重になってしまう。`restoreEntryPointURL.ts`のURL復元ロジックと、esbuildの出力パス生成の間に不整合がある可能性。
+**Status**: Not a bug in current implementation (2026-02-15 verification)
+
+**Previous concern**: TypeScriptファイルをbuildした際に、出力ファイルの拡張子が`.ts.js`のように二重になってしまうという報告。
+
+**Analysis**: コード検証の結果、現在の実装は正しく動作することを確認:
+- `restoreEntryPointURL()`が最後の拡張子（`.js`）を削除し、元の`.ts`を保持
+- `replaceExtension()`が`.ts`を`.js`に正しく置換
+- 結果: `module.ts` → `module.js` (正常動作)
+
+テストケースで動作を確認済み。過去に修正されたか、特定の条件下でのみ発生する可能性あり。
 
 ### 3. percent encodingされた`/`を含むURLがテンプレート埋め込み時にデコードされてしまう
 
