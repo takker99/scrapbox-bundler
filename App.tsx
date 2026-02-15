@@ -142,10 +142,15 @@ const App: FunctionComponent<AppProp> = ({ options, templateURL }) => {
             if (originalExt) {
               loader = loaderFromExtension(originalExt);
             }
-          }
-          if (!loader) {
-            console.warn(`Unable to determine loader for ${url}, defaulting to "text"`);
-            loader = "text";
+            if (!loader) {
+              console.warn(
+                `Unable to determine loader for ${url} ` +
+                `(output ext: "${outputExt || '(none)'}", ` +
+                `original ext: "${originalExt || '(none)'}"), ` +
+                `defaulting to "text"`
+              );
+              loader = "text";
+            }
           }
           
           const ext = outputExt === "" ? extname(loader) : outputExt;

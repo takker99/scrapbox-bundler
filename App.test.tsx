@@ -13,10 +13,26 @@ const replaceExtension = (url: string, extension: string): string => {
 Deno.test("CSS file processing - normal case", () => {
   const filePath = "/https:/example.com/style.css";
   const loaderMap = new Map([["https://example.com/style.css", "css" as const]]);
+  const entryPointExtensions = new Map([["https://example.com/style", ".css"]]);
   
   const url = restoreEntryPointURL(filePath);
   const outputExt = pathExtname(filePath);
-  const loader = loaderFromExtension(outputExt) ?? loaderMap.get(url) ?? "text";
+  
+  // Use full 4-tier fallback logic matching App.tsx
+  let loader = loaderFromExtension(outputExt);
+  if (!loader) {
+    loader = loaderMap.get(url);
+  }
+  if (!loader) {
+    const originalExt = entryPointExtensions.get(url);
+    if (originalExt) {
+      loader = loaderFromExtension(originalExt);
+    }
+  }
+  if (!loader) {
+    loader = "text";
+  }
+  
   const ext = outputExt === "" ? extname(loader) : outputExt;
   const fileName = replaceExtension(url, ext);
   
